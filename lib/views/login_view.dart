@@ -5,8 +5,9 @@ import '../viewmodels/login_viewmodel.dart';
 
 class LoginView extends StatefulWidget {
   final VoidCallback? onLoginExitoso;
+  final String? mensajeInformativo;
 
-  const LoginView({super.key, this.onLoginExitoso});
+  const LoginView({super.key, this.onLoginExitoso, this.mensajeInformativo});
 
   @override
   State<LoginView> createState() => _LoginViewState();
@@ -19,10 +20,11 @@ class _LoginViewState extends State<LoginView> {
 
   final TextEditingController _contrasenaController = TextEditingController();
 
+  bool _mostrarContrasena = false;
+
   @override
   void initState() {
     super.initState();
-
     _viewModel = getIt<LoginViewModel>();
   }
 
@@ -31,7 +33,6 @@ class _LoginViewState extends State<LoginView> {
     _usuarioController.dispose();
     _contrasenaController.dispose();
     _viewModel.dispose();
-
     super.dispose();
   }
 
@@ -96,6 +97,12 @@ class _LoginViewState extends State<LoginView> {
                         const SizedBox(height: 22),
                         _construirBolsa(),
                         const SizedBox(height: 22),
+                        if (widget.mensajeInformativo != null) ...[
+                          _construirMensajeInformativo(
+                            widget.mensajeInformativo!,
+                          ),
+                          const SizedBox(height: 16),
+                        ],
                         if (_viewModel.mensajeError != null) ...[
                           _construirMensajeError(_viewModel.mensajeError!),
                           const SizedBox(height: 16),
@@ -112,7 +119,10 @@ class _LoginViewState extends State<LoginView> {
                         TextField(
                           controller: _usuarioController,
                           enabled: !_viewModel.cargando,
+                          keyboardType: TextInputType.text,
                           textInputAction: TextInputAction.next,
+                          autocorrect: false,
+                          enableSuggestions: false,
                           onChanged: (_) {
                             if (_viewModel.mensajeError != null) {
                               _viewModel.limpiarError();
@@ -133,8 +143,11 @@ class _LoginViewState extends State<LoginView> {
                         TextField(
                           controller: _contrasenaController,
                           enabled: !_viewModel.cargando,
-                          obscureText: true,
+                          obscureText: !_mostrarContrasena,
+                          keyboardType: TextInputType.visiblePassword,
                           textInputAction: TextInputAction.done,
+                          autocorrect: false,
+                          enableSuggestions: false,
                           onSubmitted: (_) {
                             if (!_viewModel.cargando) {
                               _iniciarSesion();
@@ -145,7 +158,22 @@ class _LoginViewState extends State<LoginView> {
                               _viewModel.limpiarError();
                             }
                           },
-                          decoration: _decoracionCampo('Ingresa tu contraseña'),
+                          decoration: _decoracionCampo('Ingresa tu contraseña')
+                              .copyWith(
+                                suffixIcon: IconButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _mostrarContrasena = !_mostrarContrasena;
+                                    });
+                                  },
+                                  icon: Icon(
+                                    _mostrarContrasena
+                                        ? Icons.visibility_off_rounded
+                                        : Icons.visibility_rounded,
+                                    color: const Color(0xFF71809B),
+                                  ),
+                                ),
+                              ),
                         ),
                         const SizedBox(height: 22),
                         SizedBox(
@@ -261,6 +289,36 @@ class _LoginViewState extends State<LoginView> {
           size: 72,
           color: Color(0xFF1677F2),
         ),
+      ),
+    );
+  }
+
+  Widget _construirMensajeInformativo(String mensaje) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE1F7EA),
+        borderRadius: BorderRadius.circular(9),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.check_circle_rounded,
+            color: Color(0xFF208A55),
+            size: 18,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              mensaje,
+              style: const TextStyle(
+                color: Color(0xFF208A55),
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

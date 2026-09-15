@@ -6,6 +6,7 @@ import '../../repositories/auth_repository.dart';
 import '../../repositories/auth_repository_impl.dart';
 import '../../services/auth_service.dart';
 import '../../services/auth_service_impl.dart';
+import '../../viewmodels/cuenta_viewmodel.dart';
 import '../../viewmodels/login_viewmodel.dart';
 import '../network/api_client.dart';
 import '../network/conectividad_service.dart';
@@ -65,6 +66,12 @@ void configurarDependencias() {
     getIt.registerFactory<LoginViewModel>(
       () =>
           LoginViewModel(getIt<AuthRepository>(), getIt<ConectividadService>()),
+    );
+  }
+
+  if (!getIt.isRegistered<CuentaViewModel>()) {
+    getIt.registerFactory<CuentaViewModel>(
+      () => CuentaViewModel(getIt<AuthRepository>()),
     );
   }
 }
