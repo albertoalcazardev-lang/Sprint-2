@@ -85,8 +85,6 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> cerrarSesion() async {
-    await secureStorage.eliminar(_claveToken);
-    await secureStorage.eliminar(_claveIdUsuario);
-    await secureStorage.eliminar(_claveRol);
+    await secureStorage.limpiar();
   }
 }

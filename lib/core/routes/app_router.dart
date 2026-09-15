@@ -2,6 +2,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../repositories/auth_repository.dart';
 import '../../views/base_view.dart';
+import '../../views/cuenta_view.dart';
 import '../../views/login_view.dart';
 import '../di/dependency_injection.dart';
 import 'ruta_por_rol.dart';
@@ -45,7 +46,13 @@ class AppRouter {
       GoRoute(
         path: '/login',
         builder: (context, state) {
+          final sesionCerrada =
+              state.uri.queryParameters['sesionCerrada'] == 'true';
+
           return LoginView(
+            mensajeInformativo: sesionCerrada
+                ? 'Sesión cerrada. Tu información local se ha eliminado.'
+                : null,
             onLoginExitoso: () {
               context.go('/inicio');
             },
@@ -74,6 +81,16 @@ class AppRouter {
         path: '/cliente',
         builder: (context, state) {
           return const BaseView();
+        },
+      ),
+      GoRoute(
+        path: '/cuenta',
+        builder: (context, state) {
+          return CuentaView(
+            onSesionCerrada: () {
+              context.go('/login?sesionCerrada=true');
+            },
+          );
         },
       ),
     ],
