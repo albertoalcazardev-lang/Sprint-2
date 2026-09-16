@@ -26,4 +26,35 @@ class ProductoServiceImpl implements ProductoService {
       rethrow;
     }
   }
+
+  @override
+  Future<List<String>> obtenerCategorias() async {
+    try {
+      final response = await apiClient.dio.get('products/categories');
+
+      final datos = response.data as List<dynamic>;
+
+      return datos.map((categoria) => categoria.toString()).toList();
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<List<Producto>> obtenerProductosPorCategoria(String categoria) async {
+    try {
+      final response = await apiClient.dio.get('products/category/$categoria');
+
+      final datos = response.data as List<dynamic>;
+
+      return datos
+          .map(
+            (producto) =>
+                Producto.fromJson(Map<String, dynamic>.from(producto)),
+          )
+          .toList();
+    } on DioException {
+      rethrow;
+    }
+  }
 }
