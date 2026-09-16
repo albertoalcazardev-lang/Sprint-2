@@ -21,4 +21,14 @@ class ProductoRepositoryImpl implements ProductoRepository {
   Future<List<Producto>> obtenerProductosPorCategoria(String categoria) async {
     return await productoService.obtenerProductosPorCategoria(categoria);
   }
+
+  @override
+  Future<Producto> obtenerProductoPorId(int id) async {
+    return await productoService.obtenerProductoPorId(id);
+  }
+
+  @override
+  Future<Producto> actualizarProducto(Producto producto) async {
+    return await productoService.actualizarProducto(producto);
+  }
 }

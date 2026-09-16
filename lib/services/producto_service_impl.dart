@@ -57,4 +57,35 @@ class ProductoServiceImpl implements ProductoService {
       rethrow;
     }
   }
+
+  @override
+  Future<Producto> obtenerProductoPorId(int id) async {
+    try {
+      final response = await apiClient.dio.get('products/$id');
+
+      return Producto.fromJson(Map<String, dynamic>.from(response.data));
+    } on DioException {
+      rethrow;
+    }
+  }
+
+  @override
+  Future<Producto> actualizarProducto(Producto producto) async {
+    try {
+      final response = await apiClient.dio.put(
+        'products/${producto.id}',
+        data: {
+          'title': producto.title,
+          'price': producto.price,
+          'description': producto.description,
+          'category': producto.category,
+          'image': producto.image,
+        },
+      );
+
+      return Producto.fromJson(Map<String, dynamic>.from(response.data));
+    } on DioException {
+      rethrow;
+    }
+  }
 }
