@@ -18,7 +18,9 @@ class _CatalogoViewState extends State<CatalogoView> {
     super.initState();
 
     widget.viewModel.addListener(_actualizarPantalla);
+
     widget.viewModel.cargarProductos();
+    widget.viewModel.cargarCategorias();
   }
 
   @override
@@ -64,6 +66,51 @@ class _CatalogoViewState extends State<CatalogoView> {
       );
     }
 
+    return Column(
+      children: [
+        _construirFiltro(viewModel),
+        Expanded(child: _construirListaProductos(viewModel)),
+      ],
+    );
+  }
+
+  Widget _construirFiltro(CatalogoViewModel viewModel) {
+    return SizedBox(
+      height: 60,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        children: [
+          ChoiceChip(
+            label: const Text('Ver todos'),
+            selected: viewModel.categoriaSeleccionada == null,
+            onSelected: (seleccionado) {
+              if (seleccionado) {
+                viewModel.mostrarTodos();
+              }
+            },
+          ),
+          const SizedBox(width: 8),
+          ...viewModel.categorias.map((categoria) {
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                label: Text(categoria),
+                selected: viewModel.categoriaSeleccionada == categoria,
+                onSelected: (seleccionado) {
+                  if (seleccionado) {
+                    viewModel.filtrarPorCategoria(categoria);
+                  }
+                },
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _construirListaProductos(CatalogoViewModel viewModel) {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: viewModel.productos.length,

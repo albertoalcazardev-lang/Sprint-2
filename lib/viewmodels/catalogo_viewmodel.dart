@@ -10,6 +10,10 @@ class CatalogoViewModel extends ChangeNotifier {
 
   List<Producto> productos = [];
 
+  List<String> categorias = [];
+
+  String? categoriaSeleccionada;
+
   bool estaCargando = false;
 
   String? mensajeError;
@@ -17,6 +21,8 @@ class CatalogoViewModel extends ChangeNotifier {
   Future<void> cargarProductos() async {
     estaCargando = true;
     mensajeError = null;
+    productos = [];
+    categoriaSeleccionada = null;
     notifyListeners();
 
     try {
@@ -28,5 +34,39 @@ class CatalogoViewModel extends ChangeNotifier {
       estaCargando = false;
       notifyListeners();
     }
+  }
+
+  Future<void> cargarCategorias() async {
+    try {
+      categorias = await productoRepository.obtenerCategorias();
+      notifyListeners();
+    } catch (error) {
+      categorias = [];
+      notifyListeners();
+    }
+  }
+
+  Future<void> filtrarPorCategoria(String categoria) async {
+    estaCargando = true;
+    mensajeError = null;
+    productos = [];
+    categoriaSeleccionada = categoria;
+    notifyListeners();
+
+    try {
+      productos = await productoRepository.obtenerProductosPorCategoria(
+        categoria,
+      );
+    } catch (error) {
+      productos = [];
+      mensajeError = 'No pudimos cargar los productos de esta categoría.';
+    } finally {
+      estaCargando = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> mostrarTodos() async {
+    await cargarProductos();
   }
 }
