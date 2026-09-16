@@ -1,4 +1,4 @@
-/// US06/E2 — Validaciones reutilizables del formulario de producto.
+/// Validaciones reutilizables para crear y editar productos.
 class ProductoValidadores {
   ProductoValidadores._();
 
@@ -92,6 +92,7 @@ class ProductoValidadores {
     return null;
   }
 
+  /// US06 — Valida el formulario completo para crear un producto.
   static bool esFormularioValido({
     required String titulo,
     required String precio,
@@ -103,6 +104,19 @@ class ProductoValidadores {
         validarPrecio(precio) == null &&
         validarCategoria(categoria) == null &&
         validarImageUrl(imageUrl) == null &&
+        validarDescripcion(descripcion) == null;
+  }
+
+  /// US07/E2 — Valida solamente los campos editables de P20.
+  static bool esFormularioEdicionValido({
+    required String titulo,
+    required String precio,
+    required String? categoria,
+    required String descripcion,
+  }) {
+    return validarTitulo(titulo) == null &&
+        validarPrecio(precio) == null &&
+        validarCategoria(categoria) == null &&
         validarDescripcion(descripcion) == null;
   }
 }

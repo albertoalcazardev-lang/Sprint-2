@@ -6,4 +6,9 @@ class ApiConstants {
   static const String products = 'products';
 
   static const String productCategories = 'products/categories';
+
+  /// Construye el endpoint para consultar o modificar un producto específico.
+  static String productById(int id) {
+    return '$products/$id';
+  }
 }

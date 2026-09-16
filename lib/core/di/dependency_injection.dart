@@ -11,6 +11,7 @@ import '../../services/auth_service_impl.dart';
 import '../../services/product_service.dart';
 import '../../services/product_service_impl.dart';
 import '../../viewmodels/crear_producto_viewmodel.dart';
+import '../../viewmodels/editar_producto_viewmodel.dart';
 import '../../viewmodels/cuenta_viewmodel.dart';
 import '../../viewmodels/login_viewmodel.dart';
 import '../network/api_client.dart';
@@ -95,6 +96,15 @@ void configurarDependencias() {
   if (!getIt.isRegistered<CrearProductoViewModel>()) {
     getIt.registerFactory<CrearProductoViewModel>(
       () => CrearProductoViewModel(
+        getIt<ProductRepository>(),
+        getIt<AuthRepository>(),
+      ),
+    );
+  }
+
+  if (!getIt.isRegistered<EditarProductoViewModel>()) {
+    getIt.registerFactory<EditarProductoViewModel>(
+      () => EditarProductoViewModel(
         getIt<ProductRepository>(),
         getIt<AuthRepository>(),
       ),

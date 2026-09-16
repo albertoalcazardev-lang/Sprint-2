@@ -172,4 +172,61 @@ void main() {
       expect(resultado, isFalse);
     });
   });
+
+  group('ProductoValidadores.esFormularioEdicionValido', () {
+    test('acepta los cuatro campos editables válidos', () {
+      final resultado = ProductoValidadores.esFormularioEdicionValido(
+        titulo: 'Mochila urbana',
+        precio: '99.95',
+        categoria: "men's clothing",
+        descripcion: 'Mochila actualizada con espacio para portátil.',
+      );
+
+      expect(resultado, isTrue);
+    });
+
+    test('rechaza la edición cuando el título es inválido', () {
+      final resultado = ProductoValidadores.esFormularioEdicionValido(
+        titulo: '   ',
+        precio: '99.95',
+        categoria: "men's clothing",
+        descripcion: 'Mochila actualizada con espacio para portátil.',
+      );
+
+      expect(resultado, isFalse);
+    });
+
+    test('rechaza la edición cuando el precio es inválido', () {
+      final resultado = ProductoValidadores.esFormularioEdicionValido(
+        titulo: 'Mochila urbana',
+        precio: '0',
+        categoria: "men's clothing",
+        descripcion: 'Mochila actualizada con espacio para portátil.',
+      );
+
+      expect(resultado, isFalse);
+    });
+
+    test('rechaza la edición cuando la categoría es inválida', () {
+      final resultado = ProductoValidadores.esFormularioEdicionValido(
+        titulo: 'Mochila urbana',
+        precio: '99.95',
+        categoria: null,
+        descripcion: 'Mochila actualizada con espacio para portátil.',
+      );
+
+      expect(resultado, isFalse);
+    });
+
+    test('rechaza la edición cuando la descripción es inválida', () {
+      final resultado = ProductoValidadores.esFormularioEdicionValido(
+        titulo: 'Mochila urbana',
+        precio: '99.95',
+        categoria: "men's clothing",
+        descripcion: '   ',
+      );
+
+      expect(resultado, isFalse);
+    });
+  });
 }

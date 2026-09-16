@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:tienda_flutter/core/errors/product_exception.dart';
+import 'package:tienda_flutter/models/actualizar_producto_input.dart';
 import 'package:tienda_flutter/models/crear_producto_input.dart';
 import 'package:tienda_flutter/models/producto.dart';
 import 'package:tienda_flutter/models/rol_usuario.dart';
@@ -239,6 +240,13 @@ class FakeProductRepository implements ProductRepository {
       categoria: input.categoria,
       imageUrl: input.imageUrl,
       descripcion: input.descripcion,
+    );
+  }
+
+  @override
+  Future<Producto> actualizarProducto(ActualizarProductoInput input) {
+    throw UnimplementedError(
+      'Las pruebas de creación no actualizan productos.',
     );
   }
 

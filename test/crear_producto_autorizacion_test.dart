@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:tienda_flutter/core/di/dependency_injection.dart';
 import 'package:tienda_flutter/core/network/conectividad_service.dart';
 import 'package:tienda_flutter/core/routes/app_router.dart';
+import 'package:tienda_flutter/models/actualizar_producto_input.dart';
 import 'package:tienda_flutter/models/crear_producto_input.dart';
 import 'package:tienda_flutter/models/producto.dart';
 import 'package:tienda_flutter/models/rol_usuario.dart';
@@ -154,6 +155,13 @@ class FakeProductRepository implements ProductRepository {
       categoria: input.categoria,
       imageUrl: input.imageUrl,
       descripcion: input.descripcion,
+    );
+  }
+
+  @override
+  Future<Producto> actualizarProducto(ActualizarProductoInput input) {
+    throw UnimplementedError(
+      'Las pruebas de autorización de US06 no actualizan productos.',
     );
   }
 
