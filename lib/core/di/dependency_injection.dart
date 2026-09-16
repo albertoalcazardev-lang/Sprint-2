@@ -6,13 +6,17 @@ import '../../repositories/auth_repository.dart';
 import '../../repositories/auth_repository_impl.dart';
 import '../../repositories/producto_repository.dart';
 import '../../repositories/producto_repository_impl.dart';
+
 import '../../services/auth_service.dart';
 import '../../services/auth_service_impl.dart';
 import '../../services/producto_service.dart';
 import '../../services/producto_service_impl.dart';
+
 import '../../viewmodels/catalogo_viewmodel.dart';
+import '../../viewmodels/detalle_producto_viewmodel.dart';
 import '../../viewmodels/cuenta_viewmodel.dart';
 import '../../viewmodels/login_viewmodel.dart';
+
 import '../network/api_client.dart';
 import '../network/conectividad_service.dart';
 import '../storage/secure_storage.dart';
@@ -119,6 +123,16 @@ void configurarDependencias() {
   if (!getIt.isRegistered<CatalogoViewModel>()) {
     getIt.registerFactory<CatalogoViewModel>(
       () => CatalogoViewModel(getIt<ProductoRepository>()),
+    );
+  }
+
+  // =========================
+  // DETALLE DE PRODUCTO - US05
+  // =========================
+
+  if (!getIt.isRegistered<DetalleProductoViewModel>()) {
+    getIt.registerFactory<DetalleProductoViewModel>(
+      () => DetalleProductoViewModel(getIt<ProductoRepository>()),
     );
   }
 }
