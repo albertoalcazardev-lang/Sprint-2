@@ -4,8 +4,13 @@ import 'package:get_it/get_it.dart';
 
 import '../../repositories/auth_repository.dart';
 import '../../repositories/auth_repository_impl.dart';
+import '../../repositories/product_repository.dart';
+import '../../repositories/product_repository_impl.dart';
 import '../../services/auth_service.dart';
 import '../../services/auth_service_impl.dart';
+import '../../services/product_service.dart';
+import '../../services/product_service_impl.dart';
+import '../../viewmodels/crear_producto_viewmodel.dart';
 import '../../viewmodels/cuenta_viewmodel.dart';
 import '../../viewmodels/login_viewmodel.dart';
 import '../network/api_client.dart';
@@ -62,6 +67,18 @@ void configurarDependencias() {
     );
   }
 
+  if (!getIt.isRegistered<ProductService>()) {
+    getIt.registerLazySingleton<ProductService>(
+      () => ProductServiceImpl(getIt<ApiClient>()),
+    );
+  }
+
+  if (!getIt.isRegistered<ProductRepository>()) {
+    getIt.registerLazySingleton<ProductRepository>(
+      () => ProductRepositoryImpl(getIt<ProductService>()),
+    );
+  }
+
   if (!getIt.isRegistered<LoginViewModel>()) {
     getIt.registerFactory<LoginViewModel>(
       () =>
@@ -72,6 +89,15 @@ void configurarDependencias() {
   if (!getIt.isRegistered<CuentaViewModel>()) {
     getIt.registerFactory<CuentaViewModel>(
       () => CuentaViewModel(getIt<AuthRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<CrearProductoViewModel>()) {
+    getIt.registerFactory<CrearProductoViewModel>(
+      () => CrearProductoViewModel(
+        getIt<ProductRepository>(),
+        getIt<AuthRepository>(),
+      ),
     );
   }
 }
