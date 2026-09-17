@@ -1,41 +1,60 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../data_sources/carrito_local_data_source.dart';
+import '../../data_sources/carrito_local_data_source_impl.dart';
+import '../../data_sources/carrito_mutable_local_data_source.dart';
 import '../../repositories/auth_repository.dart';
 import '../../repositories/auth_repository_impl.dart';
-import '../../repositories/producto_repository.dart';
-import '../../repositories/producto_repository_impl.dart';
-
+import '../../repositories/carrito_repository.dart';
+import '../../repositories/carrito_repository_impl.dart';
+import '../../repositories/product_repository.dart';
+import '../../repositories/product_repository_impl.dart';
+import '../../repositories/product_query_repository.dart';
+import '../../repositories/usuario_repository.dart';
+import '../../repositories/usuario_repository_impl.dart';
+import '../../repositories/gestion_carrito_repository.dart';
+import '../../repositories/gestion_carrito_repository_impl.dart';
+import '../../repositories/historico_carrito_repository.dart';
+import '../../repositories/historico_carrito_repository_impl.dart';
 import '../../services/auth_service.dart';
 import '../../services/auth_service_impl.dart';
-import '../../services/producto_service.dart';
-import '../../services/producto_service_impl.dart';
-
+import '../../services/carrito_service.dart';
+import '../../services/carrito_service_impl.dart';
+import '../../services/gestion_carrito_service.dart';
+import '../../services/historico_carrito_service.dart';
+import '../../services/historico_carrito_service_impl.dart';
+import '../../services/product_service.dart';
+import '../../services/product_service_impl.dart';
+import '../../services/product_query_service.dart';
+import '../../services/usuario_service.dart';
+import '../../services/usuario_service_impl.dart';
+import '../../viewmodels/agregar_carrito_viewmodel.dart';
+import '../../viewmodels/carrito_viewmodel.dart';
+import '../../viewmodels/carritos_viewmodel.dart';
 import '../../viewmodels/catalogo_viewmodel.dart';
-import '../../viewmodels/detalle_producto_viewmodel.dart';
+import '../../viewmodels/crear_producto_viewmodel.dart';
 import '../../viewmodels/cuenta_viewmodel.dart';
+import '../../viewmodels/editar_producto_viewmodel.dart';
+import '../../viewmodels/detalle_producto_viewmodel.dart';
+import '../../viewmodels/eliminar_producto_viewmodel.dart';
 import '../../viewmodels/login_viewmodel.dart';
-
+import '../../viewmodels/usuarios_viewmodel.dart';
 import '../network/api_client.dart';
 import '../network/conectividad_service.dart';
+import '../storage/carrito_storage.dart';
+import '../storage/carrito_storage_impl.dart';
 import '../storage/secure_storage.dart';
 import '../utils/mapeador_rol.dart';
 
 final getIt = GetIt.instance;
 
 void configurarDependencias() {
-  // =========================
-  // API CLIENT
-  // =========================
-
   if (!getIt.isRegistered<ApiClient>()) {
     getIt.registerLazySingleton<ApiClient>(() => ApiClient());
   }
-
-  // =========================
-  // CONECTIVIDAD
-  // =========================
 
   if (!getIt.isRegistered<Connectivity>()) {
     getIt.registerLazySingleton<Connectivity>(() => Connectivity());
@@ -46,10 +65,6 @@ void configurarDependencias() {
       () => ConectividadServiceImpl(getIt<Connectivity>()),
     );
   }
-
-  // =========================
-  // ALMACENAMIENTO SEGURO
-  // =========================
 
   if (!getIt.isRegistered<FlutterSecureStorage>()) {
     getIt.registerLazySingleton<FlutterSecureStorage>(
@@ -63,17 +78,21 @@ void configurarDependencias() {
     );
   }
 
-  // =========================
-  // MAPEO DE ROLES
-  // =========================
+  if (!getIt.isRegistered<SharedPreferencesAsync>()) {
+    getIt.registerLazySingleton<SharedPreferencesAsync>(
+      () => SharedPreferencesAsync(),
+    );
+  }
+
+  if (!getIt.isRegistered<CarritoStorage>()) {
+    getIt.registerLazySingleton<CarritoStorage>(
+      () => CarritoStorageImpl(getIt<SharedPreferencesAsync>()),
+    );
+  }
 
   if (!getIt.isRegistered<MapeadorRol>()) {
     getIt.registerLazySingleton<MapeadorRol>(() => MapeadorRol());
   }
-
-  // =========================
-  // AUTENTICACIÓN - US02
-  // =========================
 
   if (!getIt.isRegistered<AuthService>()) {
     getIt.registerLazySingleton<AuthService>(
@@ -91,6 +110,97 @@ void configurarDependencias() {
     );
   }
 
+  if (!getIt.isRegistered<ProductService>()) {
+    getIt.registerLazySingleton<ProductService>(
+      () => ProductServiceImpl(getIt<ApiClient>()),
+    );
+  }
+
+  if (!getIt.isRegistered<ProductQueryService>()) {
+    getIt.registerLazySingleton<ProductQueryService>(
+      () => getIt<ProductService>() as ProductQueryService,
+    );
+  }
+
+  if (!getIt.isRegistered<ProductRepository>()) {
+    getIt.registerLazySingleton<ProductRepository>(
+      () => ProductRepositoryImpl(getIt<ProductService>()),
+    );
+  }
+
+  if (!getIt.isRegistered<ProductQueryRepository>()) {
+    getIt.registerLazySingleton<ProductQueryRepository>(
+      () => getIt<ProductRepository>() as ProductQueryRepository,
+    );
+  }
+
+  if (!getIt.isRegistered<UsuarioService>()) {
+    getIt.registerLazySingleton<UsuarioService>(
+      () => UsuarioServiceImpl(getIt<ApiClient>()),
+    );
+  }
+
+  if (!getIt.isRegistered<UsuarioRepository>()) {
+    getIt.registerLazySingleton<UsuarioRepository>(
+      () => UsuarioRepositoryImpl(getIt<UsuarioService>()),
+    );
+  }
+
+  if (!getIt.isRegistered<CarritoService>()) {
+    getIt.registerLazySingleton<CarritoService>(
+      () => CarritoServiceImpl(getIt<ApiClient>()),
+    );
+  }
+
+  if (!getIt.isRegistered<CarritoLocalDataSource>()) {
+    getIt.registerLazySingleton<CarritoLocalDataSource>(
+      () => CarritoLocalDataSourceImpl(getIt<CarritoStorage>()),
+    );
+  }
+
+  if (!getIt.isRegistered<CarritoMutableLocalDataSource>()) {
+    getIt.registerLazySingleton<CarritoMutableLocalDataSource>(
+      () => getIt<CarritoLocalDataSource>() as CarritoMutableLocalDataSource,
+    );
+  }
+
+  if (!getIt.isRegistered<GestionCarritoService>()) {
+    getIt.registerLazySingleton<GestionCarritoService>(
+      () => CarritoServiceImpl(getIt<ApiClient>()),
+    );
+  }
+
+  if (!getIt.isRegistered<CarritoRepository>()) {
+    getIt.registerLazySingleton<CarritoRepository>(
+      () => CarritoRepositoryImpl(
+        getIt<CarritoService>(),
+        getIt<CarritoLocalDataSource>(),
+      ),
+    );
+  }
+
+  if (!getIt.isRegistered<GestionCarritoRepository>()) {
+    getIt.registerLazySingleton<GestionCarritoRepository>(
+      () => GestionCarritoRepositoryImpl(
+        getIt<GestionCarritoService>(),
+        getIt<CarritoLocalDataSource>(),
+        getIt<CarritoMutableLocalDataSource>(),
+      ),
+    );
+  }
+
+  if (!getIt.isRegistered<HistoricoCarritoService>()) {
+    getIt.registerLazySingleton<HistoricoCarritoService>(
+      () => HistoricoCarritoServiceImpl(getIt<ApiClient>()),
+    );
+  }
+
+  if (!getIt.isRegistered<HistoricoCarritoRepository>()) {
+    getIt.registerLazySingleton<HistoricoCarritoRepository>(
+      () => HistoricoCarritoRepositoryImpl(getIt<HistoricoCarritoService>()),
+    );
+  }
+
   if (!getIt.isRegistered<LoginViewModel>()) {
     getIt.registerFactory<LoginViewModel>(
       () =>
@@ -100,39 +210,78 @@ void configurarDependencias() {
 
   if (!getIt.isRegistered<CuentaViewModel>()) {
     getIt.registerFactory<CuentaViewModel>(
-      () => CuentaViewModel(getIt<AuthRepository>()),
+      () =>
+          CuentaViewModel(getIt<AuthRepository>(), getIt<CarritoRepository>()),
     );
   }
 
-  // =========================
-  // CATÁLOGO DE PRODUCTOS - US03
-  // =========================
-
-  if (!getIt.isRegistered<ProductoService>()) {
-    getIt.registerLazySingleton<ProductoService>(
-      () => ProductoServiceImpl(getIt<ApiClient>()),
+  if (!getIt.isRegistered<CrearProductoViewModel>()) {
+    getIt.registerFactory<CrearProductoViewModel>(
+      () => CrearProductoViewModel(
+        getIt<ProductRepository>(),
+        getIt<AuthRepository>(),
+      ),
     );
   }
 
-  if (!getIt.isRegistered<ProductoRepository>()) {
-    getIt.registerLazySingleton<ProductoRepository>(
-      () => ProductoRepositoryImpl(getIt<ProductoService>()),
+  if (!getIt.isRegistered<EditarProductoViewModel>()) {
+    getIt.registerFactory<EditarProductoViewModel>(
+      () => EditarProductoViewModel(
+        getIt<ProductRepository>(),
+        getIt<AuthRepository>(),
+      ),
+    );
+  }
+
+  if (!getIt.isRegistered<EliminarProductoViewModel>()) {
+    getIt.registerFactory<EliminarProductoViewModel>(
+      () => EliminarProductoViewModel(
+        getIt<ProductRepository>(),
+        getIt<AuthRepository>(),
+      ),
+    );
+  }
+
+  if (!getIt.isRegistered<AgregarCarritoViewModel>()) {
+    getIt.registerFactory<AgregarCarritoViewModel>(
+      () => AgregarCarritoViewModel(
+        getIt<CarritoRepository>(),
+        getIt<AuthRepository>(),
+      ),
+    );
+  }
+
+  if (!getIt.isRegistered<CarritoViewModel>()) {
+    getIt.registerFactory<CarritoViewModel>(
+      () => CarritoViewModel(
+        getIt<CarritoRepository>(),
+        getIt<GestionCarritoRepository>(),
+        getIt<AuthRepository>(),
+      ),
+    );
+  }
+
+  if (!getIt.isRegistered<UsuariosViewModel>()) {
+    getIt.registerFactory<UsuariosViewModel>(
+      () => UsuariosViewModel(getIt<UsuarioRepository>()),
     );
   }
 
   if (!getIt.isRegistered<CatalogoViewModel>()) {
     getIt.registerFactory<CatalogoViewModel>(
-      () => CatalogoViewModel(getIt<ProductoRepository>()),
+      () => CatalogoViewModel(getIt<ProductQueryRepository>()),
     );
   }
 
-  // =========================
-  // DETALLE DE PRODUCTO - US05
-  // =========================
-
   if (!getIt.isRegistered<DetalleProductoViewModel>()) {
     getIt.registerFactory<DetalleProductoViewModel>(
-      () => DetalleProductoViewModel(getIt<ProductoRepository>()),
+      () => DetalleProductoViewModel(getIt<ProductQueryRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<CarritosViewModel>()) {
+    getIt.registerFactory<CarritosViewModel>(
+      () => CarritosViewModel(getIt<HistoricoCarritoRepository>()),
     );
   }
 }

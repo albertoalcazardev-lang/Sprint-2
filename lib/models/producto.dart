@@ -1,28 +1,17 @@
 class Producto {
   final int id;
-  final String title;
-  final double price;
-  final String description;
-  final String category;
-  final String image;
+  final String titulo;
+  final double precio;
+  final String categoria;
+  final String imageUrl;
+  final String descripcion;
 
-  Producto({
+  const Producto({
     required this.id,
-    required this.title,
-    required this.price,
-    required this.description,
-    required this.category,
-    required this.image,
+    required this.titulo,
+    required this.precio,
+    required this.categoria,
+    required this.imageUrl,
+    required this.descripcion,
   });
-
-  factory Producto.fromJson(Map<String, dynamic> json) {
-    return Producto(
-      id: json['id'],
-      title: json['title'],
-      price: (json['price'] as num).toDouble(),
-      description: json['description'],
-      category: json['category'],
-      image: json['image'],
-    );
-  }
 }
