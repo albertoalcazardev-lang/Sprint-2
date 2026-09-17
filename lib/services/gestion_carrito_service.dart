@@ -5,5 +5,5 @@ import '../models/respuesta_carrito_model.dart';
 abstract class GestionCarritoService {
   Future<RespuestaCarritoModel> actualizarCarrito(ActualizarCarritoInput input);
 
-  Future<RespuestaCarritoModel> eliminarCarrito(int idCarrito);
+  Future<void> eliminarCarrito(int idCarrito);
 }
