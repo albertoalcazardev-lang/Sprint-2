@@ -12,6 +12,8 @@ import '../../repositories/carrito_repository.dart';
 import '../../repositories/carrito_repository_impl.dart';
 import '../../repositories/product_repository.dart';
 import '../../repositories/product_repository_impl.dart';
+import '../../repositories/usuario_repository.dart';
+import '../../repositories/usuario_repository_impl.dart';
 import '../../repositories/gestion_carrito_repository.dart';
 import '../../repositories/gestion_carrito_repository_impl.dart';
 import '../../services/auth_service.dart';
@@ -21,6 +23,8 @@ import '../../services/carrito_service_impl.dart';
 import '../../services/gestion_carrito_service.dart';
 import '../../services/product_service.dart';
 import '../../services/product_service_impl.dart';
+import '../../services/usuario_service.dart';
+import '../../services/usuario_service_impl.dart';
 import '../../viewmodels/agregar_carrito_viewmodel.dart';
 import '../../viewmodels/carrito_viewmodel.dart';
 import '../../viewmodels/crear_producto_viewmodel.dart';
@@ -28,6 +32,7 @@ import '../../viewmodels/cuenta_viewmodel.dart';
 import '../../viewmodels/editar_producto_viewmodel.dart';
 import '../../viewmodels/eliminar_producto_viewmodel.dart';
 import '../../viewmodels/login_viewmodel.dart';
+import '../../viewmodels/usuarios_viewmodel.dart';
 import '../network/api_client.dart';
 import '../network/conectividad_service.dart';
 import '../storage/carrito_storage.dart';
@@ -105,6 +110,18 @@ void configurarDependencias() {
   if (!getIt.isRegistered<ProductRepository>()) {
     getIt.registerLazySingleton<ProductRepository>(
       () => ProductRepositoryImpl(getIt<ProductService>()),
+    );
+  }
+
+  if (!getIt.isRegistered<UsuarioService>()) {
+    getIt.registerLazySingleton<UsuarioService>(
+      () => UsuarioServiceImpl(getIt<ApiClient>()),
+    );
+  }
+
+  if (!getIt.isRegistered<UsuarioRepository>()) {
+    getIt.registerLazySingleton<UsuarioRepository>(
+      () => UsuarioRepositoryImpl(getIt<UsuarioService>()),
     );
   }
 
@@ -208,6 +225,12 @@ void configurarDependencias() {
         getIt<GestionCarritoRepository>(),
         getIt<AuthRepository>(),
       ),
+    );
+  }
+
+  if (!getIt.isRegistered<UsuariosViewModel>()) {
+    getIt.registerFactory<UsuariosViewModel>(
+      () => UsuariosViewModel(getIt<UsuarioRepository>()),
     );
   }
 }

@@ -180,6 +180,27 @@ class _BaseViewState extends State<BaseView> {
                   const SizedBox(height: 22),
                   _construirContenidoCatalogoPendiente(),
                   const SizedBox(height: 22),
+                  if (esAdministrador) ...[
+                    SizedBox(
+                      height: 50,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          context.go('/usuarios');
+                        },
+                        icon: const Icon(Icons.people_alt_rounded),
+                        label: const Text('Usuarios registrados'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.textoPrincipal,
+                          backgroundColor: AppColors.blanco,
+                          side: const BorderSide(color: AppColors.bordeCampo),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   if (esCliente) ...[
                     SizedBox(
                       height: 50,

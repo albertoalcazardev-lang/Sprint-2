@@ -9,6 +9,7 @@ import '../../views/crear_producto_view.dart';
 import '../../views/cuenta_view.dart';
 import '../../views/editar_producto_view.dart';
 import '../../views/login_view.dart';
+import '../../views/usuarios_view.dart';
 import '../di/dependency_injection.dart';
 import 'ruta_por_rol.dart';
 
@@ -48,7 +49,8 @@ class AppRouter {
 
       final esRutaAdministrativa =
           ubicacionActual == rutaCrearProducto ||
-          _patronRutaEdicion.hasMatch(ubicacionActual);
+          _patronRutaEdicion.hasMatch(ubicacionActual) ||
+          ubicacionActual == '/usuarios';
 
       if (esRutaAdministrativa && sesion.rol != RolUsuario.administrador) {
         return '$rutaCorrecta?accesoDenegado=true';
@@ -194,6 +196,13 @@ class AppRouter {
               context.go('/inicio?accesoDenegado=true');
             },
           );
+        },
+      ),
+      GoRoute(
+        name: 'usuarios',
+        path: '/usuarios',
+        builder: (context, state) {
+          return const UsuariosView();
         },
       ),
       GoRoute(
