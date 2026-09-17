@@ -1,3 +1,4 @@
+import 'package:flutter/widgets.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../models/producto.dart';
@@ -168,7 +169,7 @@ class AppRouter {
         builder: (context, state) {
           return CrearProductoView(
             onVolver: () {
-              context.go('/administrador');
+              _volverORuta(context, '/administrador');
             },
             onAccesoNoAutorizado: () {
               context.go('/inicio?accesoDenegado=true');
@@ -207,12 +208,7 @@ class AppRouter {
           return EditarProductoView(
             producto: producto,
             onVolver: () {
-              if (context.canPop()) {
-                context.pop();
-                return;
-              }
-
-              context.go('/administrador');
+              _volverORuta(context, '/administrador');
             },
             onProductoActualizado: (productoActualizado) {
               if (context.canPop()) {
@@ -248,10 +244,10 @@ class AppRouter {
         builder: (context, state) {
           return CarritoView(
             onExplorarCatalogo: () {
-              context.go('/cliente');
+              _volverORuta(context, '/cliente');
             },
             onIrACuenta: () {
-              context.go('/cuenta');
+              context.push('/cuenta');
             },
             onAccesoNoAutorizado: () {
               context.go('/inicio?accesoDenegado=true');
@@ -288,6 +284,15 @@ class AppRouter {
     }
 
     return null;
+  }
+
+  static void _volverORuta(BuildContext context, String rutaAlternativa) {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+
+    context.go(rutaAlternativa);
   }
 
   static String? _obtenerMensajeInformativo(GoRouterState state) {
