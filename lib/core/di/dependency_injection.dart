@@ -2,6 +2,12 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
 
+import '../../repositories/usuario_repository.dart';
+import '../../repositories/usuario_repository_impl.dart';
+import '../../services/usuario_service.dart';
+import '../../services/usuario_service_impl.dart';
+import '../../viewmodels/usuarios_viewmodel.dart';
+
 import '../../repositories/auth_repository.dart';
 import '../../repositories/auth_repository_impl.dart';
 import '../../services/auth_service.dart';
@@ -74,4 +80,32 @@ void configurarDependencias() {
       () => CuentaViewModel(getIt<AuthRepository>()),
     );
   }
+
+  if (!getIt.isRegistered<UsuarioService>()) {
+  getIt.registerLazySingleton<UsuarioService>(
+    () => UsuarioServiceImpl(
+      getIt<ApiClient>(),
+    ),
+  );
+
+}
+
+if (!getIt.isRegistered<UsuarioRepository>()) {
+  getIt.registerLazySingleton<UsuarioRepository>(
+    () => UsuarioRepositoryImpl(
+      getIt<UsuarioService>(),
+    ),
+  );
+  
+}
+
+if (!getIt.isRegistered<UsuariosViewModel>()) {
+  getIt.registerFactory<UsuariosViewModel>(
+    () => UsuariosViewModel(
+      getIt<UsuarioRepository>(),
+    ),
+  );
+}
+
+
 }

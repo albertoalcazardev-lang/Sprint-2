@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/di/dependency_injection.dart';
+import '../models/rol_usuario.dart';
 import '../models/sesion_usuario.dart';
 import '../repositories/auth_repository.dart';
 
@@ -57,12 +58,18 @@ class _BaseViewState extends State<BaseView> {
   @override
   Widget build(BuildContext context) {
     if (_cargando) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
     }
 
     if (_sesion == null) {
       return const Scaffold(
-        body: Center(child: Text('No existe una sesión activa')),
+        body: Center(
+          child: Text('No existe una sesión activa'),
+        ),
       );
     }
 
@@ -87,7 +94,9 @@ class _BaseViewState extends State<BaseView> {
                     size: 70,
                     color: Color(0xFF1677F2),
                   ),
+
                   const SizedBox(height: 20),
+
                   const Text(
                     'Sesión iniciada correctamente',
                     textAlign: TextAlign.center,
@@ -97,7 +106,9 @@ class _BaseViewState extends State<BaseView> {
                       color: Color(0xFF17233C),
                     ),
                   ),
+
                   const SizedBox(height: 20),
+
                   Text(
                     'ID de usuario: ${_sesion!.idUsuario}',
                     style: const TextStyle(
@@ -105,7 +116,9 @@ class _BaseViewState extends State<BaseView> {
                       color: Color(0xFF17233C),
                     ),
                   ),
+
                   const SizedBox(height: 8),
+
                   Text(
                     'Rol: ${_nombreRol()}',
                     style: const TextStyle(
@@ -114,7 +127,38 @@ class _BaseViewState extends State<BaseView> {
                       color: Color(0xFF1677F2),
                     ),
                   ),
+
                   const SizedBox(height: 28),
+
+                  // US11:
+                  // Este botón solamente aparece para administradores.
+                  if (_sesion!.rol == RolUsuario.administrador) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          context.push('/usuarios');
+                        },
+                        icon: const Icon(
+                          Icons.people_alt_rounded,
+                        ),
+                        label: const Text(
+                          'Usuarios registrados',
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF17233C),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+                  ],
+
                   SizedBox(
                     width: double.infinity,
                     height: 50,
@@ -122,8 +166,12 @@ class _BaseViewState extends State<BaseView> {
                       onPressed: () {
                         context.go('/cuenta');
                       },
-                      icon: const Icon(Icons.person_rounded),
-                      label: const Text('Mi cuenta'),
+                      icon: const Icon(
+                        Icons.person_rounded,
+                      ),
+                      label: const Text(
+                        'Mi cuenta',
+                      ),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF1677F2),
                         foregroundColor: Colors.white,
