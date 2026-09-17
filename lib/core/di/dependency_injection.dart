@@ -1,22 +1,32 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:get_it/get_it.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../../data_sources/carrito_local_data_source.dart';
+import '../../data_sources/carrito_local_data_source_impl.dart';
 import '../../repositories/auth_repository.dart';
 import '../../repositories/auth_repository_impl.dart';
+import '../../repositories/carrito_repository.dart';
+import '../../repositories/carrito_repository_impl.dart';
 import '../../repositories/product_repository.dart';
 import '../../repositories/product_repository_impl.dart';
 import '../../services/auth_service.dart';
 import '../../services/auth_service_impl.dart';
+import '../../services/carrito_service.dart';
+import '../../services/carrito_service_impl.dart';
 import '../../services/product_service.dart';
 import '../../services/product_service_impl.dart';
+import '../../viewmodels/agregar_carrito_viewmodel.dart';
 import '../../viewmodels/crear_producto_viewmodel.dart';
+import '../../viewmodels/cuenta_viewmodel.dart';
 import '../../viewmodels/editar_producto_viewmodel.dart';
 import '../../viewmodels/eliminar_producto_viewmodel.dart';
-import '../../viewmodels/cuenta_viewmodel.dart';
 import '../../viewmodels/login_viewmodel.dart';
 import '../network/api_client.dart';
 import '../network/conectividad_service.dart';
+import '../storage/carrito_storage.dart';
+import '../storage/carrito_storage_impl.dart';
 import '../storage/secure_storage.dart';
 import '../utils/mapeador_rol.dart';
 
@@ -46,6 +56,18 @@ void configurarDependencias() {
   if (!getIt.isRegistered<SecureStorage>()) {
     getIt.registerLazySingleton<SecureStorage>(
       () => SecureStorageImpl(getIt<FlutterSecureStorage>()),
+    );
+  }
+
+  if (!getIt.isRegistered<SharedPreferencesAsync>()) {
+    getIt.registerLazySingleton<SharedPreferencesAsync>(
+      () => SharedPreferencesAsync(),
+    );
+  }
+
+  if (!getIt.isRegistered<CarritoStorage>()) {
+    getIt.registerLazySingleton<CarritoStorage>(
+      () => CarritoStorageImpl(getIt<SharedPreferencesAsync>()),
     );
   }
 
@@ -81,6 +103,27 @@ void configurarDependencias() {
     );
   }
 
+  if (!getIt.isRegistered<CarritoService>()) {
+    getIt.registerLazySingleton<CarritoService>(
+      () => CarritoServiceImpl(getIt<ApiClient>()),
+    );
+  }
+
+  if (!getIt.isRegistered<CarritoLocalDataSource>()) {
+    getIt.registerLazySingleton<CarritoLocalDataSource>(
+      () => CarritoLocalDataSourceImpl(getIt<CarritoStorage>()),
+    );
+  }
+
+  if (!getIt.isRegistered<CarritoRepository>()) {
+    getIt.registerLazySingleton<CarritoRepository>(
+      () => CarritoRepositoryImpl(
+        getIt<CarritoService>(),
+        getIt<CarritoLocalDataSource>(),
+      ),
+    );
+  }
+
   if (!getIt.isRegistered<LoginViewModel>()) {
     getIt.registerFactory<LoginViewModel>(
       () =>
@@ -90,7 +133,8 @@ void configurarDependencias() {
 
   if (!getIt.isRegistered<CuentaViewModel>()) {
     getIt.registerFactory<CuentaViewModel>(
-      () => CuentaViewModel(getIt<AuthRepository>()),
+      () =>
+          CuentaViewModel(getIt<AuthRepository>(), getIt<CarritoRepository>()),
     );
   }
 
@@ -116,6 +160,15 @@ void configurarDependencias() {
     getIt.registerFactory<EliminarProductoViewModel>(
       () => EliminarProductoViewModel(
         getIt<ProductRepository>(),
+        getIt<AuthRepository>(),
+      ),
+    );
+  }
+
+  if (!getIt.isRegistered<AgregarCarritoViewModel>()) {
+    getIt.registerFactory<AgregarCarritoViewModel>(
+      () => AgregarCarritoViewModel(
+        getIt<CarritoRepository>(),
         getIt<AuthRepository>(),
       ),
     );

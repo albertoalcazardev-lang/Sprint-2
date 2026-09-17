@@ -7,6 +7,9 @@ class ApiConstants {
 
   static const String productCategories = 'products/categories';
 
+  /// US09/E1-E2 — Creación simulada de carritos.
+  static const String carts = 'carts';
+
   /// Construye el endpoint para consultar o modificar un producto específico.
   static String productById(int id) {
     return '$products/$id';
