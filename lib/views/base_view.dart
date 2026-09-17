@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../core/di/dependency_injection.dart';
 import '../models/sesion_usuario.dart';
 import '../repositories/auth_repository.dart';
+import 'catalogo_view.dart';
 
 class BaseView extends StatefulWidget {
   const BaseView({super.key});
@@ -68,56 +69,60 @@ class _BaseViewState extends State<BaseView> {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FBFF),
+      appBar: AppBar(
+        title: const Text('Catálogo de productos'),
+        backgroundColor: const Color(0xFF1677F2),
+        foregroundColor: Colors.white,
+      ),
       body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 390),
-            child: Container(
-              margin: const EdgeInsets.all(20),
-              padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: const Color(0xFFEAF4FF),
-                borderRadius: BorderRadius.circular(28),
+                borderRadius: BorderRadius.circular(20),
               ),
               child: Column(
-                mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(
                     Icons.verified_user_rounded,
-                    size: 70,
+                    size: 55,
                     color: Color(0xFF1677F2),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
                   const Text(
                     'Sesión iniciada correctamente',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 22,
+                      fontSize: 20,
                       fontWeight: FontWeight.w800,
                       color: Color(0xFF17233C),
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 12),
                   Text(
                     'ID de usuario: ${_sesion!.idUsuario}',
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 15,
                       color: Color(0xFF17233C),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     'Rol: ${_nombreRol()}',
                     style: const TextStyle(
-                      fontSize: 16,
+                      fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF1677F2),
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
-                    height: 50,
+                    height: 45,
                     child: ElevatedButton.icon(
                       onPressed: () {
                         context.go('/cuenta');
@@ -136,7 +141,23 @@ class _BaseViewState extends State<BaseView> {
                 ],
               ),
             ),
-          ),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16),
+              child: Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Catálogo general',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF17233C),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Expanded(child: CatalogoView(viewModel: getIt())),
+          ],
         ),
       ),
     );

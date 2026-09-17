@@ -1,8 +1,11 @@
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../repositories/auth_repository.dart';
+import '../../viewmodels/detalle_producto_viewmodel.dart';
 import '../../views/base_view.dart';
 import '../../views/cuenta_view.dart';
+import '../../views/detalle_producto_view.dart';
 import '../../views/login_view.dart';
 import '../di/dependency_injection.dart';
 import 'ruta_por_rol.dart';
@@ -59,30 +62,35 @@ class AppRouter {
           );
         },
       ),
+
       GoRoute(
         path: '/inicio',
         builder: (context, state) {
           return const BaseView();
         },
       ),
+
       GoRoute(
         path: '/administrador',
         builder: (context, state) {
           return const BaseView();
         },
       ),
+
       GoRoute(
         path: '/auditor',
         builder: (context, state) {
           return const BaseView();
         },
       ),
+
       GoRoute(
         path: '/cliente',
         builder: (context, state) {
           return const BaseView();
         },
       ),
+
       GoRoute(
         path: '/cuenta',
         builder: (context, state) {
@@ -90,6 +98,28 @@ class AppRouter {
             onSesionCerrada: () {
               context.go('/login?sesionCerrada=true');
             },
+          );
+        },
+      ),
+
+      // =========================
+      // DETALLE DE PRODUCTO - US05
+      // =========================
+      GoRoute(
+        path: '/detalle-producto/:id',
+        builder: (context, state) {
+          final id = int.tryParse(state.pathParameters['id'] ?? '');
+
+          if (id == null) {
+            return const Scaffold(
+              body: Center(child: Text('Producto no disponible')),
+            );
+          }
+
+          return DetalleProductoView(
+            viewModel: getIt<DetalleProductoViewModel>(),
+            authRepository: getIt<AuthRepository>(),
+            productoId: id,
           );
         },
       ),
