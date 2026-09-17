@@ -58,6 +58,46 @@ void main() {
     expect(productRepository.llamadasObtenerCategorias, 1);
   });
 
+  testWidgets('guardado exitoso muestra una confirmación visible', (
+    tester,
+  ) async {
+    authRepository.sesion = const SesionUsuario(
+      token: 'token-admin',
+      idUsuario: 1,
+      rol: RolUsuario.administrador,
+    );
+
+    await _abrirRuta(tester, AppRouter.rutaCrearProducto);
+
+    final campos = find.byType(TextFormField);
+    await tester.enterText(campos.at(0), 'Audífonos Bluetooth Pro');
+    await tester.enterText(campos.at(1), '49.99');
+    await tester.enterText(campos.at(2), 'https://example.com/audifonos.png');
+    await tester.enterText(
+      campos.at(3),
+      'Audífonos inalámbricos con batería de larga duración.',
+    );
+
+    final selectorCategoria = find.byType(DropdownButtonFormField<String>);
+    await tester.ensureVisible(selectorCategoria);
+    await tester.tap(selectorCategoria);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('electronics').last);
+    await tester.pumpAndSettle();
+
+    final guardar = find.text('Guardar producto');
+    await tester.ensureVisible(guardar);
+    await tester.tap(guardar);
+    await tester.pumpAndSettle();
+
+    expect(productRepository.llamadasCrearProducto, 1);
+    expect(find.byType(SnackBar), findsOneWidget);
+    expect(
+      find.text('Producto creado (Simulación). ID generado: 21'),
+      findsWidgets,
+    );
+  });
+
   testWidgets('Cliente es redirigido y no construye el formulario', (
     tester,
   ) async {
