@@ -121,7 +121,7 @@ class CarritoServiceImpl implements CarritoService, GestionCarritoService {
   /// US10/E3 — Fake Store elimina el carrito remoto completo; localmente se
   /// conserva el resto de líneas para representar la eliminación simulada.
   @override
-  Future<RespuestaCarritoModel> eliminarCarrito(int idCarrito) async {
+  Future<void> eliminarCarrito(int idCarrito) async {
     try {
       if (idCarrito <= 0) {
         throw const DatosCarritoInvalidosException(
@@ -132,15 +132,27 @@ class CarritoServiceImpl implements CarritoService, GestionCarritoService {
       final response = await apiClient.dio.delete(
         ApiConstants.cartById(idCarrito),
       );
-      final respuesta = _decodificarRespuesta(response.data);
+      final datos = response.data;
 
-      if (respuesta.id != idCarrito) {
+      // Fake Store API no persiste los carritos creados. Por eso un DELETE
+      // exitoso sobre un ID simulado puede responder 200 con cuerpo vacío.
+      // El repositorio conserva el resultado en memoria y solo necesita que
+      // la operación HTTP haya terminado correctamente.
+      if (datos == null || (datos is String && datos.trim().isEmpty)) {
+        return;
+      }
+
+      if (datos is! Map) {
+        throw const RespuestaCarritoInvalidaException();
+      }
+
+      final idRespuesta = datos['id'];
+
+      if (idRespuesta is! num || idRespuesta.toInt() != idCarrito) {
         throw const RespuestaCarritoInvalidaException(
           'La respuesta no corresponde al carrito eliminado.',
         );
       }
-
-      return respuesta;
     } on DioException catch (error) {
       throw _convertirErrorDio(error, operacion: 'eliminar');
     } on FormatException catch (error) {

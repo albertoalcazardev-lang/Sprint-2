@@ -3,13 +3,12 @@ import 'package:tienda_flutter/core/errors/product_exception.dart';
 import 'package:tienda_flutter/models/actualizar_producto_input.dart';
 import 'package:tienda_flutter/models/crear_producto_input.dart';
 import 'package:tienda_flutter/models/producto_model.dart';
-import 'package:tienda_flutter/repositories/product_repository.dart';
 import 'package:tienda_flutter/repositories/product_repository_impl.dart';
 import 'package:tienda_flutter/services/product_service.dart';
 
 void main() {
   late FakeProductService productService;
-  late ProductRepository productRepository;
+  late ProductRepositoryImpl productRepository;
 
   const input = ActualizarProductoInput(
     id: 7,
@@ -55,6 +54,16 @@ void main() {
       producto.descripcion,
       'Mochila actualizada con compartimento para portátil.',
     );
+  });
+
+  test('conserva localmente el producto confirmado por el PUT', () async {
+    final actualizado = await productRepository.actualizarProducto(input);
+
+    final recuperado = await productRepository.obtenerProductoPorId(input.id);
+
+    expect(recuperado, same(actualizado));
+    expect(recuperado.titulo, 'Mochila urbana actualizada');
+    expect(productService.llamadasActualizarProducto, 1);
   });
 
   test('conserva un error técnico controlado', () async {

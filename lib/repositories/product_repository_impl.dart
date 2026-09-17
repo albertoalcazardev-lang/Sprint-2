@@ -10,6 +10,7 @@ import 'product_query_repository.dart';
 class ProductRepositoryImpl
     implements ProductRepository, ProductQueryRepository {
   final ProductService productService;
+  final Map<int, Producto> _productosActualizadosLocalmente = {};
 
   ProductRepositoryImpl(this.productService);
 
@@ -17,7 +18,9 @@ class ProductRepositoryImpl
   Future<List<Producto>> obtenerProductos() async {
     try {
       final productos = await _queryService.obtenerProductos();
-      return productos.map((producto) => producto.toEntity()).toList();
+      return productos
+          .map((producto) => _combinarConActualizacion(producto.toEntity()))
+          .toList();
     } on ProductoException {
       rethrow;
     } catch (_) {
@@ -28,6 +31,12 @@ class ProductRepositoryImpl
   @override
   Future<Producto> obtenerProductoPorId(int productoId) async {
     try {
+      final productoLocal = _productosActualizadosLocalmente[productoId];
+
+      if (productoLocal != null) {
+        return productoLocal;
+      }
+
       return (await _queryService.obtenerProductoPorId(productoId)).toEntity();
     } on ProductoException {
       rethrow;
@@ -42,7 +51,21 @@ class ProductRepositoryImpl
       final productos = await _queryService.obtenerProductosPorCategoria(
         categoria,
       );
-      return productos.map((producto) => producto.toEntity()).toList();
+      final resultado = productos
+          .map((producto) => _combinarConActualizacion(producto.toEntity()))
+          .where((producto) => producto.categoria == categoria)
+          .toList();
+      final idsIncluidos = resultado.map((producto) => producto.id).toSet();
+
+      resultado.addAll(
+        _productosActualizadosLocalmente.values.where(
+          (producto) =>
+              producto.categoria == categoria &&
+              !idsIncluidos.contains(producto.id),
+        ),
+      );
+
+      return resultado;
     } on ProductoException {
       rethrow;
     } catch (_) {
@@ -62,6 +85,11 @@ class ProductRepositoryImpl
     }
 
     return service as ProductQueryService;
+  }
+
+  Producto _combinarConActualizacion(Producto productoRemoto) {
+    return _productosActualizadosLocalmente[productoRemoto.id] ??
+        productoRemoto;
   }
 
   @override
@@ -84,8 +112,12 @@ class ProductRepositoryImpl
   Future<Producto> actualizarProducto(ActualizarProductoInput input) async {
     try {
       final productoModel = await productService.actualizarProducto(input);
+      final productoActualizado = productoModel.toEntity();
 
-      return productoModel.toEntity();
+      _productosActualizadosLocalmente[productoActualizado.id] =
+          productoActualizado;
+
+      return productoActualizado;
     } on ProductoException {
       rethrow;
     } catch (_) {

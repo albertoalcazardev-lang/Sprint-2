@@ -170,7 +170,7 @@ class _BaseViewState extends State<BaseView> {
                           height: 48,
                           child: ElevatedButton.icon(
                             onPressed: () {
-                              context.go('/products/new');
+                              context.push('/products/new');
                             },
                             icon: const Icon(Icons.add_rounded, size: 20),
                             label: const Text('Nuevo'),
@@ -204,7 +204,7 @@ class _BaseViewState extends State<BaseView> {
                       height: 50,
                       child: OutlinedButton.icon(
                         onPressed: () {
-                          context.go('/usuarios');
+                          context.push('/usuarios');
                         },
                         icon: const Icon(Icons.people_alt_rounded),
                         label: const Text('Usuarios registrados'),
@@ -223,7 +223,7 @@ class _BaseViewState extends State<BaseView> {
                       height: 50,
                       child: OutlinedButton.icon(
                         onPressed: () {
-                          context.go('/carritos');
+                          context.push('/carritos');
                         },
                         icon: const Icon(Icons.history_rounded),
                         label: const Text('Histórico de carritos'),
@@ -244,7 +244,7 @@ class _BaseViewState extends State<BaseView> {
                       height: 50,
                       child: ElevatedButton.icon(
                         onPressed: () {
-                          context.go('/cart');
+                          context.push('/cart');
                         },
                         icon: const Icon(Icons.shopping_cart_rounded),
                         label: const Text('Mi carrito'),
@@ -263,7 +263,7 @@ class _BaseViewState extends State<BaseView> {
                     height: 50,
                     child: OutlinedButton.icon(
                       onPressed: () {
-                        context.go('/cuenta');
+                        context.push('/cuenta');
                       },
                       icon: const Icon(Icons.person_rounded),
                       label: const Text('Mi cuenta'),

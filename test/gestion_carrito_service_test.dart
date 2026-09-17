@@ -82,6 +82,21 @@ void main() {
     expect(interceptor.solicitud!.path, ApiConstants.cartById(21));
     expect(interceptor.solicitud!.data, isNull);
   });
+
+  test('DELETE acepta una respuesta vacía para un carrito simulado', () async {
+    interceptor.respuesta = null;
+
+    await service.eliminarCarrito(21);
+
+    expect(interceptor.solicitud!.method, 'DELETE');
+    expect(interceptor.solicitud!.path, ApiConstants.cartById(21));
+  });
+
+  test('DELETE rechaza una respuesta con otro identificador', () async {
+    interceptor.respuesta = {'id': 99};
+
+    await expectLater(service.eliminarCarrito(21), throwsA(isA<Exception>()));
+  });
 }
 
 class InterceptorGestionCarrito extends Interceptor {

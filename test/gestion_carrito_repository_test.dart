@@ -107,24 +107,11 @@ class FakeGestionService implements GestionCarritoService {
   }
 
   @override
-  Future<RespuestaCarritoModel> eliminarCarrito(int idCarrito) async {
+  Future<void> eliminarCarrito(int idCarrito) async {
     orden.add('remoto-delete');
     ultimoIdEliminado = idCarrito;
     final fallo = error;
     if (fallo != null) throw fallo;
-    return _respuesta(idCarrito, 4, const [
-      ItemCarrito(
-        producto: Producto(
-          id: 1,
-          titulo: 'Mochila',
-          precio: 20,
-          categoria: 'bags',
-          imageUrl: 'url',
-          descripcion: 'Descripción',
-        ),
-        cantidad: 1,
-      ),
-    ]);
   }
 
   RespuestaCarritoModel _respuesta(

@@ -53,6 +53,54 @@ class _DetalleProductoViewState extends State<DetalleProductoView> {
   }
 
   @override
+  void didUpdateWidget(covariant DetalleProductoView oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    var reinicializarCarrito = false;
+
+    if (!identical(oldWidget.viewModel, widget.viewModel)) {
+      final productoActual =
+          oldWidget.viewModel.producto ??
+          oldWidget.productoInicial ??
+          widget.productoInicial;
+
+      oldWidget.viewModel.removeListener(_actualizarPantalla);
+      oldWidget.viewModel.dispose();
+
+      widget.viewModel.addListener(_actualizarPantalla);
+      widget.viewModel.inicializar(
+        productoId: widget.productoId,
+        productoInicial: productoActual,
+      );
+      reinicializarCarrito = true;
+    }
+
+    if (!identical(
+      oldWidget.agregarCarritoViewModel,
+      widget.agregarCarritoViewModel,
+    )) {
+      oldWidget.agregarCarritoViewModel.dispose();
+      reinicializarCarrito = true;
+    }
+
+    if (!identical(
+      oldWidget.eliminarProductoViewModel,
+      widget.eliminarProductoViewModel,
+    )) {
+      oldWidget.eliminarProductoViewModel.dispose();
+    }
+
+    if (!identical(oldWidget.authRepository, widget.authRepository)) {
+      _cargarRol();
+    }
+
+    if (reinicializarCarrito) {
+      _productoInicializadoEnCarrito = null;
+      _inicializarCarritoSiCorresponde();
+    }
+  }
+
+  @override
   void dispose() {
     widget.viewModel.removeListener(_actualizarPantalla);
     widget.viewModel.dispose();

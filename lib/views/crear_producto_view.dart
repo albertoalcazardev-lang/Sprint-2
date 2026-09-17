@@ -24,6 +24,7 @@ class CrearProductoView extends StatefulWidget {
 
 class _CrearProductoViewState extends State<CrearProductoView> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  final ScrollController _scrollController = ScrollController();
 
   final TextEditingController _tituloController = TextEditingController();
   final TextEditingController _precioController = TextEditingController();
@@ -72,6 +73,7 @@ class _CrearProductoViewState extends State<CrearProductoView> {
 
   @override
   void dispose() {
+    _scrollController.dispose();
     _tituloController.dispose();
     _precioController.dispose();
     _imageUrlController.dispose();
@@ -127,6 +129,9 @@ class _CrearProductoViewState extends State<CrearProductoView> {
       return;
     }
 
+    final mensajeConfirmacion =
+        _viewModel.mensajeExito ?? 'Producto creado (Simulación).';
+
     _tituloController.clear();
     _precioController.clear();
     _imageUrlController.clear();
@@ -138,7 +143,43 @@ class _CrearProductoViewState extends State<CrearProductoView> {
     });
 
     _formKey.currentState?.reset();
-    _tituloFocus.requestFocus();
+
+    if (_scrollController.hasClients) {
+      await _scrollController.animateTo(
+        0,
+        duration: const Duration(milliseconds: 280),
+        curve: Curves.easeOut,
+      );
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    final messenger = ScaffoldMessenger.of(context);
+    messenger
+      ..clearSnackBars()
+      ..showSnackBar(
+        SnackBar(
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: AppColors.exito,
+          content: Row(
+            children: [
+              const Icon(Icons.check_circle_rounded, color: AppColors.blanco),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  mensajeConfirmacion,
+                  style: const TextStyle(
+                    color: AppColors.blanco,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
   }
 
   void _enfocarPrimerCampoInvalido() {
@@ -202,6 +243,7 @@ class _CrearProductoViewState extends State<CrearProductoView> {
                     _construirEncabezado(),
                     Expanded(
                       child: SingleChildScrollView(
+                        controller: _scrollController,
                         keyboardDismissBehavior:
                             ScrollViewKeyboardDismissBehavior.onDrag,
                         padding: const EdgeInsets.fromLTRB(20, 8, 20, 28),
