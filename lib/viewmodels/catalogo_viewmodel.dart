@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 
 import '../models/producto.dart';
-import '../repositories/producto_repository.dart';
+import '../repositories/product_query_repository.dart';
 
 class CatalogoViewModel extends ChangeNotifier {
-  final ProductoRepository productoRepository;
+  final ProductQueryRepository productoRepository;
 
   CatalogoViewModel(this.productoRepository);
 

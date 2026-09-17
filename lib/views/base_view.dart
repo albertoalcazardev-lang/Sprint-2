@@ -8,11 +8,18 @@ import '../core/di/dependency_injection.dart';
 import '../models/rol_usuario.dart';
 import '../models/sesion_usuario.dart';
 import '../repositories/auth_repository.dart';
+import '../viewmodels/catalogo_viewmodel.dart';
+import 'catalogo_view.dart';
 
 class BaseView extends StatefulWidget {
   final String? mensajeAccesoDenegado;
+  final String? mensajeInformativo;
 
-  const BaseView({super.key, this.mensajeAccesoDenegado});
+  const BaseView({
+    super.key,
+    this.mensajeAccesoDenegado,
+    this.mensajeInformativo,
+  });
 
   @override
   State<BaseView> createState() => _BaseViewState();
@@ -20,8 +27,10 @@ class BaseView extends StatefulWidget {
 
 class _BaseViewState extends State<BaseView> {
   SesionUsuario? _sesion;
+  CatalogoViewModel? _catalogoViewModel;
   bool _cargando = true;
   String? _mensajeAccesoDenegado;
+  String? _mensajeInformativo;
   Timer? _temporizadorAviso;
 
   @override
@@ -29,6 +38,7 @@ class _BaseViewState extends State<BaseView> {
     super.initState();
 
     _configurarAviso(widget.mensajeAccesoDenegado);
+    _mensajeInformativo = widget.mensajeInformativo;
     _obtenerSesion();
   }
 
@@ -39,11 +49,16 @@ class _BaseViewState extends State<BaseView> {
     if (oldWidget.mensajeAccesoDenegado != widget.mensajeAccesoDenegado) {
       _configurarAviso(widget.mensajeAccesoDenegado);
     }
+
+    if (oldWidget.mensajeInformativo != widget.mensajeInformativo) {
+      _configurarAvisoInformativo(widget.mensajeInformativo);
+    }
   }
 
   @override
   void dispose() {
     _temporizadorAviso?.cancel();
+    _catalogoViewModel?.dispose();
     super.dispose();
   }
 
@@ -131,6 +146,10 @@ class _BaseViewState extends State<BaseView> {
                   const SizedBox(height: 24),
                   if (_mensajeAccesoDenegado != null) ...[
                     _construirAvisoAccesoDenegado(_mensajeAccesoDenegado!),
+                    const SizedBox(height: 18),
+                  ],
+                  if (_mensajeInformativo != null) ...[
+                    _construirAvisoInformativo(_mensajeInformativo!),
                     const SizedBox(height: 18),
                   ],
                   Row(
@@ -349,7 +368,55 @@ class _BaseViewState extends State<BaseView> {
     );
   }
 
+  Widget _construirAvisoInformativo(String mensaje) {
+    return Semantics(
+      container: true,
+      liveRegion: true,
+      label: mensaje,
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: AppColors.fondoExito,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.check_circle_rounded,
+              color: AppColors.exito,
+              size: 21,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                mensaje,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.exito,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _construirContenidoCatalogoPendiente() {
+    // Algunos tests de rutas registran solo las dependencias de autenticación.
+    // En producción el ViewModel está registrado y se conserva durante toda la
+    // vida de BaseView para no repetir consultas al reconstruir la pantalla.
+    if (!getIt.isRegistered<CatalogoViewModel>()) {
+      return _construirCatalogoNoDisponible();
+    }
+
+    _catalogoViewModel ??= getIt<CatalogoViewModel>();
+    return CatalogoView(viewModel: _catalogoViewModel!);
+  }
+
+  Widget _construirCatalogoNoDisponible() {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 42),
@@ -379,7 +446,7 @@ class _BaseViewState extends State<BaseView> {
           ),
           SizedBox(height: 8),
           Text(
-            'Los productos se mostrarán aquí al integrar la historia de consulta del catálogo.',
+            'No fue posible inicializar el catálogo en este contexto.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,
@@ -390,5 +457,21 @@ class _BaseViewState extends State<BaseView> {
         ],
       ),
     );
+  }
+
+  void _configurarAvisoInformativo(String? mensaje) {
+    _temporizadorAviso?.cancel();
+    _mensajeInformativo = mensaje;
+
+    if (mensaje == null || mensaje.isEmpty) {
+      return;
+    }
+
+    _temporizadorAviso = Timer(const Duration(seconds: 6), () {
+      if (!mounted) return;
+      setState(() {
+        _mensajeInformativo = null;
+      });
+    });
   }
 }

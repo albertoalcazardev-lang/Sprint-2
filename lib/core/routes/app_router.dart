@@ -8,6 +8,7 @@ import '../../views/carrito_view.dart';
 import '../../views/carritos_view.dart';
 import '../../views/crear_producto_view.dart';
 import '../../views/cuenta_view.dart';
+import '../../views/detalle_producto_view.dart';
 import '../../views/editar_producto_view.dart';
 import '../../views/login_view.dart';
 import '../../views/usuarios_view.dart';
@@ -107,6 +108,7 @@ class AppRouter {
         builder: (context, state) {
           return BaseView(
             mensajeAccesoDenegado: _obtenerMensajeCatalogo(state),
+            mensajeInformativo: _obtenerMensajeInformativo(state),
           );
         },
       ),
@@ -115,6 +117,7 @@ class AppRouter {
         builder: (context, state) {
           return BaseView(
             mensajeAccesoDenegado: _obtenerMensajeCatalogo(state),
+            mensajeInformativo: _obtenerMensajeInformativo(state),
           );
         },
       ),
@@ -123,6 +126,7 @@ class AppRouter {
         builder: (context, state) {
           return BaseView(
             mensajeAccesoDenegado: _obtenerMensajeCatalogo(state),
+            mensajeInformativo: _obtenerMensajeInformativo(state),
           );
         },
       ),
@@ -131,6 +135,30 @@ class AppRouter {
         builder: (context, state) {
           return BaseView(
             mensajeAccesoDenegado: _obtenerMensajeCatalogo(state),
+            mensajeInformativo: _obtenerMensajeInformativo(state),
+          );
+        },
+      ),
+      GoRoute(
+        name: 'detalleProducto',
+        path: '/detalle-producto/:id',
+        redirect: (context, state) {
+          final id = int.tryParse(state.pathParameters['id'] ?? '');
+          return id == null || id <= 0
+              ? '/inicio?productoNoDisponible=true'
+              : null;
+        },
+        builder: (context, state) {
+          final id = int.parse(state.pathParameters['id']!);
+          final extra = state.extra;
+
+          return DetalleProductoView(
+            viewModel: getIt(),
+            agregarCarritoViewModel: getIt(),
+            eliminarProductoViewModel: getIt(),
+            authRepository: getIt<AuthRepository>(),
+            productoId: id,
+            productoInicial: extra is Producto ? extra : null,
           );
         },
       ),
@@ -257,6 +285,14 @@ class AppRouter {
 
     if (productoNoDisponible) {
       return 'No se encontró el producto que intentas editar.';
+    }
+
+    return null;
+  }
+
+  static String? _obtenerMensajeInformativo(GoRouterState state) {
+    if (state.uri.queryParameters['productoEliminado'] == 'true') {
+      return 'Producto eliminado (Simulación). Al recargar puede reaparecer.';
     }
 
     return null;

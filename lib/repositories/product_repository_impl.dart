@@ -3,12 +3,66 @@ import '../models/actualizar_producto_input.dart';
 import '../models/crear_producto_input.dart';
 import '../models/producto.dart';
 import '../services/product_service.dart';
+import '../services/product_query_service.dart';
 import 'product_repository.dart';
+import 'product_query_repository.dart';
 
-class ProductRepositoryImpl implements ProductRepository {
+class ProductRepositoryImpl
+    implements ProductRepository, ProductQueryRepository {
   final ProductService productService;
 
   ProductRepositoryImpl(this.productService);
+
+  @override
+  Future<List<Producto>> obtenerProductos() async {
+    try {
+      final productos = await _queryService.obtenerProductos();
+      return productos.map((producto) => producto.toEntity()).toList();
+    } on ProductoException {
+      rethrow;
+    } catch (_) {
+      throw const ProductoException('No pudimos cargar el catálogo.');
+    }
+  }
+
+  @override
+  Future<Producto> obtenerProductoPorId(int productoId) async {
+    try {
+      return (await _queryService.obtenerProductoPorId(productoId)).toEntity();
+    } on ProductoException {
+      rethrow;
+    } catch (_) {
+      throw const ProductoException('No se encontró el producto.');
+    }
+  }
+
+  @override
+  Future<List<Producto>> obtenerProductosPorCategoria(String categoria) async {
+    try {
+      final productos = await _queryService.obtenerProductosPorCategoria(
+        categoria,
+      );
+      return productos.map((producto) => producto.toEntity()).toList();
+    } on ProductoException {
+      rethrow;
+    } catch (_) {
+      throw const ProductoException(
+        'No pudimos cargar los productos de esta categoría.',
+      );
+    }
+  }
+
+  ProductQueryService get _queryService {
+    final service = productService;
+
+    if (service is! ProductQueryService) {
+      throw const ProductoException(
+        'El servicio no admite consultas de productos.',
+      );
+    }
+
+    return service as ProductQueryService;
+  }
 
   @override
   Future<Producto> crearProducto(CrearProductoInput input) async {

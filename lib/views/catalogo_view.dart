@@ -40,10 +40,7 @@ class _CatalogoViewState extends State<CatalogoView> {
   Widget build(BuildContext context) {
     final viewModel = widget.viewModel;
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Catálogo de productos')),
-      body: _construirContenido(viewModel),
-    );
+    return _construirContenido(viewModel);
   }
 
   Widget _construirContenido(CatalogoViewModel viewModel) {
@@ -68,9 +65,10 @@ class _CatalogoViewState extends State<CatalogoView> {
     }
 
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         _construirFiltro(viewModel),
-        Expanded(child: _construirListaProductos(viewModel)),
+        _construirListaProductos(viewModel),
       ],
     );
   }
@@ -113,6 +111,8 @@ class _CatalogoViewState extends State<CatalogoView> {
 
   Widget _construirListaProductos(CatalogoViewModel viewModel) {
     return ListView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
       itemCount: viewModel.productos.length,
       itemBuilder: (context, index) {
@@ -123,7 +123,7 @@ class _CatalogoViewState extends State<CatalogoView> {
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
             onTap: () {
-              context.push('/detalle-producto/${producto.id}');
+              context.push('/detalle-producto/${producto.id}', extra: producto);
             },
             child: Padding(
               padding: const EdgeInsets.all(16),
@@ -132,7 +132,13 @@ class _CatalogoViewState extends State<CatalogoView> {
                   SizedBox(
                     width: 100,
                     height: 100,
-                    child: Image.network(producto.image, fit: BoxFit.contain),
+                    child: Image.network(
+                      producto.imageUrl,
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(Icons.image_not_supported_outlined);
+                      },
+                    ),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -140,7 +146,7 @@ class _CatalogoViewState extends State<CatalogoView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          producto.title,
+                          producto.titulo,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
@@ -148,7 +154,7 @@ class _CatalogoViewState extends State<CatalogoView> {
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          '\$${producto.price.toStringAsFixed(2)}',
+                          '\$${producto.precio.toStringAsFixed(2)} USD',
                           style: const TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,

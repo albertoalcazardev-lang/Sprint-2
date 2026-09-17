@@ -1,20 +1,34 @@
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 
+import '../core/constants/app_colors.dart';
 import '../models/producto.dart';
 import '../models/rol_usuario.dart';
 import '../repositories/auth_repository.dart';
+import '../viewmodels/agregar_carrito_viewmodel.dart';
 import '../viewmodels/detalle_producto_viewmodel.dart';
+import '../viewmodels/eliminar_producto_viewmodel.dart';
+import '../widgets/aviso_producto_actualizado.dart';
+import '../widgets/controles_agregar_carrito.dart';
+import '../widgets/dialogo_eliminar_producto.dart';
 
+/// US05 con integración de US07, US08 y US09.
 class DetalleProductoView extends StatefulWidget {
   final DetalleProductoViewModel viewModel;
+  final AgregarCarritoViewModel agregarCarritoViewModel;
+  final EliminarProductoViewModel eliminarProductoViewModel;
   final AuthRepository authRepository;
   final int productoId;
+  final Producto? productoInicial;
 
   const DetalleProductoView({
     super.key,
     required this.viewModel,
+    required this.agregarCarritoViewModel,
+    required this.eliminarProductoViewModel,
     required this.authRepository,
     required this.productoId,
+    this.productoInicial,
   });
 
   @override
@@ -22,40 +36,99 @@ class DetalleProductoView extends StatefulWidget {
 }
 
 class _DetalleProductoViewState extends State<DetalleProductoView> {
-  bool esAdministrador = false;
+  RolUsuario? _rol;
+  int? _productoInicializadoEnCarrito;
+  bool _mostrarAvisoActualizado = false;
 
   @override
   void initState() {
     super.initState();
-
     widget.viewModel.addListener(_actualizarPantalla);
-
     _cargarRol();
-    widget.viewModel.cargarProducto(widget.productoId);
+    widget.viewModel.inicializar(
+      productoId: widget.productoId,
+      productoInicial: widget.productoInicial,
+    );
+    _inicializarCarritoSiCorresponde();
   }
 
   @override
   void dispose() {
     widget.viewModel.removeListener(_actualizarPantalla);
+    widget.viewModel.dispose();
+    widget.agregarCarritoViewModel.dispose();
+    widget.eliminarProductoViewModel.dispose();
     super.dispose();
-  }
-
-  void _actualizarPantalla() {
-    if (mounted) {
-      setState(() {});
-    }
   }
 
   Future<void> _cargarRol() async {
     final sesion = await widget.authRepository.obtenerSesion();
 
-    if (!mounted) {
+    if (!mounted) return;
+
+    setState(() {
+      _rol = sesion?.rol;
+    });
+  }
+
+  void _actualizarPantalla() {
+    if (!mounted) return;
+
+    _inicializarCarritoSiCorresponde();
+    setState(() {});
+  }
+
+  void _inicializarCarritoSiCorresponde() {
+    final producto = widget.viewModel.producto;
+
+    if (producto == null || _productoInicializadoEnCarrito == producto.id) {
       return;
     }
 
+    _productoInicializadoEnCarrito = producto.id;
+    widget.agregarCarritoViewModel.inicializar(producto);
+  }
+
+  Future<void> _editarProducto(Producto producto) async {
+    final actualizado = await context.push<Producto>(
+      '/products/${producto.id}/edit',
+      extra: producto,
+    );
+
+    if (!mounted || actualizado == null) return;
+
+    widget.viewModel.aplicarProductoActualizado(actualizado);
     setState(() {
-      esAdministrador = sesion?.rol == RolUsuario.administrador;
+      _mostrarAvisoActualizado = true;
     });
+  }
+
+  Future<void> _eliminarProducto(Producto producto) async {
+    final eliminado = await mostrarDialogoEliminarProducto(
+      context: context,
+      producto: producto,
+      viewModel: widget.eliminarProductoViewModel,
+    );
+
+    if (!mounted) return;
+
+    if (widget.eliminarProductoViewModel.accesoNoAutorizado) {
+      context.go('/inicio?accesoDenegado=true');
+      return;
+    }
+
+    if (eliminado) {
+      context.go('/administrador?productoEliminado=true');
+    }
+  }
+
+  void _volver() {
+    if (context.canPop()) {
+      context.pop();
+      return;
+    }
+
+    context.go('/inicio');
   }
 
   @override
@@ -63,302 +136,191 @@ class _DetalleProductoViewState extends State<DetalleProductoView> {
     final viewModel = widget.viewModel;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Detalle del producto')),
-      body: _construirContenido(viewModel),
+      backgroundColor: AppColors.fondoGeneral,
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720),
+            child: _construirContenido(viewModel),
+          ),
+        ),
+      ),
     );
   }
 
   Widget _construirContenido(DetalleProductoViewModel viewModel) {
-    if (viewModel.estaCargando) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
-    if (viewModel.mensajeError != null && viewModel.producto == null) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted) {
-          return;
-        }
-
-        Navigator.of(context).pop();
-      });
-
-      return const Center(child: CircularProgressIndicator());
+    if (viewModel.estaCargando && viewModel.producto == null) {
+      return const Center(
+        child: CircularProgressIndicator(color: AppColors.primario),
+      );
     }
 
     final producto = viewModel.producto;
 
     if (producto == null) {
-      return const Center(child: Text('Producto no disponible'));
+      return _EstadoErrorDetalle(
+        mensaje: viewModel.mensajeError ?? 'Producto no disponible.',
+        onVolver: _volver,
+        onReintentar: () => viewModel.cargarProducto(widget.productoId),
+      );
     }
 
-    return _construirDetalle(producto);
-  }
-
-  Widget _construirDetalle(Producto producto) {
-    final viewModel = widget.viewModel;
-
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(20, 14, 20, 28),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Center(
-            child: SizedBox(
-              width: 250,
-              height: 250,
-              child: Image.network(producto.image, fit: BoxFit.contain),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: _volver,
+              icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 17),
+              label: const Text('Volver al catálogo'),
             ),
           ),
-
-          const SizedBox(height: 24),
-
-          Text(
-            producto.title,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          if (_mostrarAvisoActualizado) ...[
+            const AvisoProductoActualizado(),
+            const SizedBox(height: 16),
+          ],
+          Container(
+            height: 240,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: AppColors.blanco,
+              borderRadius: BorderRadius.circular(18),
+            ),
+            child: Image.network(
+              producto.imageUrl,
+              fit: BoxFit.contain,
+              errorBuilder: (context, error, stackTrace) {
+                return const Icon(
+                  Icons.image_not_supported_outlined,
+                  size: 64,
+                  color: AppColors.textoSecundario,
+                );
+              },
+            ),
           ),
-
-          const SizedBox(height: 16),
-
-          Text(
-            '\$${producto.price.toStringAsFixed(2)}',
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-
           const SizedBox(height: 20),
-
-          const Text(
-            'Categoría',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          Text(
+            producto.categoria,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w700,
+              color: AppColors.primario,
+            ),
           ),
-
-          const SizedBox(height: 6),
-
-          Text(producto.category, style: const TextStyle(fontSize: 16)),
-
-          const SizedBox(height: 20),
-
+          const SizedBox(height: 8),
+          Text(
+            producto.titulo,
+            style: const TextStyle(
+              fontSize: 25,
+              height: 1.2,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textoPrincipal,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '\$${producto.precio.toStringAsFixed(2)} USD',
+            style: const TextStyle(
+              fontSize: 23,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textoPrincipal,
+            ),
+          ),
+          const SizedBox(height: 22),
           const Text(
             'Descripción',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.w800,
+              color: AppColors.textoPrincipal,
+            ),
           ),
-
-          const SizedBox(height: 6),
-
+          const SizedBox(height: 8),
           Text(
-            producto.description,
-            style: const TextStyle(fontSize: 16, height: 1.5),
+            producto.descripcion,
+            style: const TextStyle(
+              fontSize: 15,
+              height: 1.5,
+              color: AppColors.textoSecundario,
+            ),
           ),
-
-          if (esAdministrador) ...[
-            const SizedBox(height: 30),
-
+          const SizedBox(height: 24),
+          if (_rol == RolUsuario.administrador)
             Row(
               children: [
                 Expanded(
+                  flex: 2,
                   child: ElevatedButton.icon(
-                    onPressed: viewModel.estaGuardando
-                        ? null
-                        : () => _mostrarFormularioEdicion(producto),
-                    icon: const Icon(Icons.edit),
-                    label: const Text('Editar'),
+                    onPressed: () => _editarProducto(producto),
+                    icon: const Icon(Icons.edit_rounded),
+                    label: const Text('Editar producto'),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(50),
+                      backgroundColor: AppColors.primario,
+                      foregroundColor: AppColors.blanco,
+                    ),
                   ),
                 ),
-
                 const SizedBox(width: 12),
-
                 Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: viewModel.estaGuardando
-                        ? null
-                        : () => _mostrarConfirmacionEliminar(producto),
-                    icon: const Icon(Icons.delete),
+                  child: OutlinedButton.icon(
+                    onPressed: () => _eliminarProducto(producto),
+                    icon: const Icon(Icons.delete_outline_rounded),
                     label: const Text('Eliminar'),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size.fromHeight(50),
+                      foregroundColor: AppColors.error,
+                      side: const BorderSide(color: AppColors.error),
+                    ),
                   ),
                 ),
               ],
-            ),
-
-            if (viewModel.estaGuardando) ...[
-              const SizedBox(height: 16),
-              const Center(child: CircularProgressIndicator()),
-            ],
-          ],
+            )
+          else
+            ControlesAgregarCarrito(viewModel: widget.agregarCarritoViewModel),
         ],
       ),
     );
   }
+}
 
-  Future<void> _mostrarFormularioEdicion(Producto producto) async {
-    final tituloController = TextEditingController(text: producto.title);
+class _EstadoErrorDetalle extends StatelessWidget {
+  final String mensaje;
+  final VoidCallback onVolver;
+  final VoidCallback onReintentar;
 
-    final precioController = TextEditingController(
-      text: producto.price.toString(),
-    );
+  const _EstadoErrorDetalle({
+    required this.mensaje,
+    required this.onVolver,
+    required this.onReintentar,
+  });
 
-    final descripcionController = TextEditingController(
-      text: producto.description,
-    );
-
-    final categoriaController = TextEditingController(text: producto.category);
-
-    final imagenController = TextEditingController(text: producto.image);
-
-    final formularioValido = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Editar producto'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: tituloController,
-                  decoration: const InputDecoration(labelText: 'Título'),
-                ),
-
-                const SizedBox(height: 12),
-
-                TextField(
-                  controller: precioController,
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  decoration: const InputDecoration(labelText: 'Precio'),
-                ),
-
-                const SizedBox(height: 12),
-
-                TextField(
-                  controller: descripcionController,
-                  maxLines: 3,
-                  decoration: const InputDecoration(labelText: 'Descripción'),
-                ),
-
-                const SizedBox(height: 12),
-
-                TextField(
-                  controller: categoriaController,
-                  decoration: const InputDecoration(labelText: 'Categoría'),
-                ),
-
-                const SizedBox(height: 12),
-
-                TextField(
-                  controller: imagenController,
-                  decoration: const InputDecoration(labelText: 'URL de imagen'),
-                ),
-              ],
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.inventory_2_outlined,
+              size: 62,
+              color: AppColors.textoSecundario,
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(false);
-              },
-              child: const Text('Cancelar'),
-            ),
+            const SizedBox(height: 16),
+            Text(mensaje, textAlign: TextAlign.center),
+            const SizedBox(height: 18),
             ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop(true);
-              },
-              child: const Text('Guardar'),
+              onPressed: onReintentar,
+              child: const Text('Reintentar'),
             ),
+            TextButton(onPressed: onVolver, child: const Text('Volver')),
           ],
-        );
-      },
-    );
-
-    if (formularioValido != true || !mounted) {
-      tituloController.dispose();
-      precioController.dispose();
-      descripcionController.dispose();
-      categoriaController.dispose();
-      imagenController.dispose();
-      return;
-    }
-
-    final precio = double.tryParse(precioController.text.trim());
-
-    if (precio == null || precio < 0) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('El precio no es válido.')));
-
-      tituloController.dispose();
-      precioController.dispose();
-      descripcionController.dispose();
-      categoriaController.dispose();
-      imagenController.dispose();
-      return;
-    }
-
-    final productoActualizado = Producto(
-      id: producto.id,
-      title: tituloController.text.trim(),
-      price: precio,
-      description: descripcionController.text.trim(),
-      category: categoriaController.text.trim(),
-      image: imagenController.text.trim(),
-    );
-
-    final actualizado = await widget.viewModel.actualizarProducto(
-      productoActualizado,
-    );
-
-    if (!mounted) {
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          actualizado
-              ? 'Producto actualizado correctamente.'
-              : 'No se pudo actualizar el producto.',
         ),
-      ),
-    );
-
-    tituloController.dispose();
-    precioController.dispose();
-    descripcionController.dispose();
-    categoriaController.dispose();
-    imagenController.dispose();
-  }
-
-  Future<void> _mostrarConfirmacionEliminar(Producto producto) async {
-    final confirmar = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Eliminar producto'),
-          content: Text('¿Deseas eliminar "${producto.title}"?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(false);
-              },
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).pop(true);
-              },
-              child: const Text('Eliminar'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirmar != true || !mounted) {
-      return;
-    }
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('La eliminación se implementará en el siguiente paso.'),
       ),
     );
   }

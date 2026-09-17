@@ -1,62 +1,81 @@
 import 'package:flutter/foundation.dart';
 
+import '../core/errors/product_exception.dart';
 import '../models/producto.dart';
-import '../repositories/producto_repository.dart';
+import '../repositories/product_query_repository.dart';
 
 class DetalleProductoViewModel extends ChangeNotifier {
-  final ProductoRepository productoRepository;
+  final ProductQueryRepository productRepository;
 
-  DetalleProductoViewModel(this.productoRepository);
+  DetalleProductoViewModel(this.productRepository);
 
-  Producto? producto;
+  Producto? _producto;
+  bool _cargando = false;
+  String? _mensajeError;
+  bool _disposed = false;
 
-  bool estaCargando = false;
+  Producto? get producto => _producto;
+  bool get estaCargando => _cargando;
+  String? get mensajeError => _mensajeError;
 
-  bool estaGuardando = false;
+  Future<void> inicializar({
+    required int productoId,
+    Producto? productoInicial,
+  }) async {
+    if (_disposed) return;
 
-  String? mensajeError;
+    if (productoInicial != null && productoInicial.id == productoId) {
+      _producto = productoInicial;
+      _mensajeError = null;
+      _notificar();
+      return;
+    }
 
-  String? mensajeExito;
+    await cargarProducto(productoId);
+  }
 
-  Future<void> cargarProducto(int id) async {
-    estaCargando = true;
-    mensajeError = null;
-    mensajeExito = null;
-    producto = null;
-    notifyListeners();
+  Future<void> cargarProducto(int productoId) async {
+    if (_disposed || _cargando) return;
+
+    if (productoId <= 0) {
+      _mensajeError = 'Producto no disponible.';
+      _notificar();
+      return;
+    }
+
+    _cargando = true;
+    _mensajeError = null;
+    _notificar();
 
     try {
-      producto = await productoRepository.obtenerProductoPorId(id);
-    } catch (error) {
-      producto = null;
-      mensajeError = 'Producto no disponible';
+      _producto = await productRepository.obtenerProductoPorId(productoId);
+    } on ProductoException catch (error) {
+      _producto = null;
+      _mensajeError = error.mensaje;
+    } catch (_) {
+      _producto = null;
+      _mensajeError = 'Producto no disponible.';
     } finally {
-      estaCargando = false;
-      notifyListeners();
+      _cargando = false;
+      _notificar();
     }
   }
 
-  Future<bool> actualizarProducto(Producto productoActualizado) async {
-    estaGuardando = true;
-    mensajeError = null;
-    mensajeExito = null;
-    notifyListeners();
+  void aplicarProductoActualizado(Producto producto) {
+    if (_disposed || _producto?.id != producto.id) return;
 
-    try {
-      final productoGuardado = await productoRepository.actualizarProducto(
-        productoActualizado,
-      );
+    _producto = producto;
+    _mensajeError = null;
+    _notificar();
+  }
 
-      producto = productoGuardado;
-      mensajeExito = 'Producto actualizado correctamente';
+  void _notificar() {
+    if (!_disposed) notifyListeners();
+  }
 
-      return true;
-    } catch (error) {
-      mensajeError = 'No se pudo actualizar el producto.';
-      return false;
-    } finally {
-      estaGuardando = false;
-      notifyListeners();
-    }
+  @override
+  void dispose() {
+    _disposed = true;
+    super.dispose();
   }
 }

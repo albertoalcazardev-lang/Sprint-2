@@ -7,11 +7,68 @@ import '../models/actualizar_producto_input.dart';
 import '../models/crear_producto_input.dart';
 import '../models/producto_model.dart';
 import 'product_service.dart';
+import 'product_query_service.dart';
 
-class ProductServiceImpl implements ProductService {
+class ProductServiceImpl implements ProductService, ProductQueryService {
   final ApiClient apiClient;
 
   ProductServiceImpl(this.apiClient);
+
+  @override
+  Future<List<ProductoModel>> obtenerProductos() {
+    return _obtenerLista(ApiConstants.products);
+  }
+
+  @override
+  Future<ProductoModel> obtenerProductoPorId(int productoId) async {
+    if (productoId <= 0) {
+      throw const ProductoException('No se encontró el producto.');
+    }
+
+    try {
+      final response = await apiClient.dio.get(
+        ApiConstants.productById(productoId),
+      );
+      final datos = response.data;
+
+      if (datos is! Map) {
+        throw const RespuestaProductoInvalidaException();
+      }
+
+      final producto = ProductoModel.fromJson(Map<String, dynamic>.from(datos));
+
+      if (producto.id != productoId) {
+        throw const RespuestaProductoInvalidaException(
+          'La respuesta no corresponde al producto solicitado.',
+        );
+      }
+
+      return producto;
+    } on DioException catch (error) {
+      throw _convertirErrorDio(
+        error,
+        mensajePredeterminado: 'No pudimos cargar el producto.',
+        mensajeNoEncontrado: 'No se encontró el producto.',
+      );
+    } on FormatException catch (error) {
+      throw RespuestaProductoInvalidaException(error.message);
+    } on ProductoException {
+      rethrow;
+    } catch (_) {
+      throw const RespuestaProductoInvalidaException();
+    }
+  }
+
+  @override
+  Future<List<ProductoModel>> obtenerProductosPorCategoria(String categoria) {
+    final categoriaNormalizada = categoria.trim();
+
+    if (categoriaNormalizada.isEmpty) {
+      throw const ProductoException('Selecciona una categoría válida.');
+    }
+
+    return _obtenerLista(ApiConstants.productsByCategory(categoriaNormalizada));
+  }
 
   @override
   Future<ProductoModel> crearProducto(CrearProductoInput input) async {
@@ -204,6 +261,44 @@ class ProductServiceImpl implements ProductService {
     } catch (_) {
       throw const RespuestaProductoInvalidaException(
         'No pudimos interpretar las categorías.',
+      );
+    }
+  }
+
+  Future<List<ProductoModel>> _obtenerLista(String endpoint) async {
+    try {
+      final response = await apiClient.dio.get(endpoint);
+      final datos = response.data;
+
+      if (datos is! List) {
+        throw const RespuestaProductoInvalidaException(
+          'No pudimos interpretar el catálogo.',
+        );
+      }
+
+      return datos
+          .map((producto) {
+            if (producto is! Map) {
+              throw const FormatException(
+                'El catálogo contiene datos inválidos.',
+              );
+            }
+
+            return ProductoModel.fromJson(Map<String, dynamic>.from(producto));
+          })
+          .toList(growable: false);
+    } on DioException catch (error) {
+      throw _convertirErrorDio(
+        error,
+        mensajePredeterminado: 'No pudimos cargar el catálogo.',
+      );
+    } on FormatException catch (error) {
+      throw RespuestaProductoInvalidaException(error.message);
+    } on ProductoException {
+      rethrow;
+    } catch (_) {
+      throw const RespuestaProductoInvalidaException(
+        'No pudimos interpretar el catálogo.',
       );
     }
   }

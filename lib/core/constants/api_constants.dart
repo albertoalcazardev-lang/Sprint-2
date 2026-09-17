@@ -19,4 +19,8 @@ class ApiConstants {
   static String productById(int id) {
     return '$products/$id';
   }
+
+  static String productsByCategory(String category) {
+    return '$products/category/${Uri.encodeComponent(category)}';
+  }
 }

@@ -12,6 +12,7 @@ import '../../repositories/carrito_repository.dart';
 import '../../repositories/carrito_repository_impl.dart';
 import '../../repositories/product_repository.dart';
 import '../../repositories/product_repository_impl.dart';
+import '../../repositories/product_query_repository.dart';
 import '../../repositories/usuario_repository.dart';
 import '../../repositories/usuario_repository_impl.dart';
 import '../../repositories/gestion_carrito_repository.dart';
@@ -27,14 +28,17 @@ import '../../services/historico_carrito_service.dart';
 import '../../services/historico_carrito_service_impl.dart';
 import '../../services/product_service.dart';
 import '../../services/product_service_impl.dart';
+import '../../services/product_query_service.dart';
 import '../../services/usuario_service.dart';
 import '../../services/usuario_service_impl.dart';
 import '../../viewmodels/agregar_carrito_viewmodel.dart';
 import '../../viewmodels/carrito_viewmodel.dart';
 import '../../viewmodels/carritos_viewmodel.dart';
+import '../../viewmodels/catalogo_viewmodel.dart';
 import '../../viewmodels/crear_producto_viewmodel.dart';
 import '../../viewmodels/cuenta_viewmodel.dart';
 import '../../viewmodels/editar_producto_viewmodel.dart';
+import '../../viewmodels/detalle_producto_viewmodel.dart';
 import '../../viewmodels/eliminar_producto_viewmodel.dart';
 import '../../viewmodels/login_viewmodel.dart';
 import '../../viewmodels/usuarios_viewmodel.dart';
@@ -112,9 +116,21 @@ void configurarDependencias() {
     );
   }
 
+  if (!getIt.isRegistered<ProductQueryService>()) {
+    getIt.registerLazySingleton<ProductQueryService>(
+      () => getIt<ProductService>() as ProductQueryService,
+    );
+  }
+
   if (!getIt.isRegistered<ProductRepository>()) {
     getIt.registerLazySingleton<ProductRepository>(
       () => ProductRepositoryImpl(getIt<ProductService>()),
+    );
+  }
+
+  if (!getIt.isRegistered<ProductQueryRepository>()) {
+    getIt.registerLazySingleton<ProductQueryRepository>(
+      () => getIt<ProductRepository>() as ProductQueryRepository,
     );
   }
 
@@ -181,9 +197,7 @@ void configurarDependencias() {
 
   if (!getIt.isRegistered<HistoricoCarritoRepository>()) {
     getIt.registerLazySingleton<HistoricoCarritoRepository>(
-      () => HistoricoCarritoRepositoryImpl(
-        getIt<HistoricoCarritoService>(),
-      ),
+      () => HistoricoCarritoRepositoryImpl(getIt<HistoricoCarritoService>()),
     );
   }
 
@@ -250,6 +264,18 @@ void configurarDependencias() {
   if (!getIt.isRegistered<UsuariosViewModel>()) {
     getIt.registerFactory<UsuariosViewModel>(
       () => UsuariosViewModel(getIt<UsuarioRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<CatalogoViewModel>()) {
+    getIt.registerFactory<CatalogoViewModel>(
+      () => CatalogoViewModel(getIt<ProductQueryRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<DetalleProductoViewModel>()) {
+    getIt.registerFactory<DetalleProductoViewModel>(
+      () => DetalleProductoViewModel(getIt<ProductQueryRepository>()),
     );
   }
 
