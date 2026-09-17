@@ -110,6 +110,56 @@ class ProductServiceImpl implements ProductService {
     }
   }
 
+  /// US08/E1 — Envía DELETE /products/{id} y valida la respuesta.
+  @override
+  Future<ProductoModel> eliminarProducto(int productoId) async {
+    try {
+      if (productoId <= 0) {
+        throw const ProductoException(
+          'No se encontró el producto que intentas eliminar.',
+        );
+      }
+
+      final response = await apiClient.dio.delete(
+        ApiConstants.productById(productoId),
+      );
+
+      final datos = response.data;
+
+      if (datos is! Map) {
+        throw const RespuestaProductoInvalidaException();
+      }
+
+      final productoEliminado = ProductoModel.fromJson(
+        Map<String, dynamic>.from(datos),
+      );
+
+      if (productoEliminado.id != productoId) {
+        throw const RespuestaProductoInvalidaException(
+          'La respuesta del servidor no corresponde '
+          'al producto eliminado.',
+        );
+      }
+
+      return productoEliminado;
+    } on DioException catch (error) {
+      throw _convertirErrorDio(
+        error,
+        mensajePredeterminado:
+            'No pudimos eliminar el producto. '
+            'Inténtalo nuevamente.',
+        mensajeNoEncontrado:
+            'No se encontró el producto que intentas eliminar.',
+      );
+    } on FormatException catch (error) {
+      throw RespuestaProductoInvalidaException(error.message);
+    } on ProductoException {
+      rethrow;
+    } catch (_) {
+      throw const RespuestaProductoInvalidaException();
+    }
+  }
+
   @override
   Future<List<String>> obtenerCategorias() async {
     try {

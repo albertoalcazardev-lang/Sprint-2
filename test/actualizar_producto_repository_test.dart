@@ -136,6 +136,13 @@ class FakeProductService implements ProductService {
   }
 
   @override
+  Future<ProductoModel> eliminarProducto(int productoId) {
+    throw UnimplementedError(
+      'Las pruebas de actualización no eliminan productos.',
+    );
+  }
+
+  @override
   Future<List<String>> obtenerCategorias() async {
     llamadasObtenerCategorias++;
 

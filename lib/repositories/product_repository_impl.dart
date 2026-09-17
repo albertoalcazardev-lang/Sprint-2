@@ -25,7 +25,7 @@ class ProductRepositoryImpl implements ProductRepository {
     }
   }
 
-  /// US07/E1 — Delega el PUT al Service y devuelve la entidad actualizada.
+  /// US07/E1 — Delega el PUT y devuelve la entidad actualizada.
   @override
   Future<Producto> actualizarProducto(ActualizarProductoInput input) async {
     try {
@@ -36,7 +36,25 @@ class ProductRepositoryImpl implements ProductRepository {
       rethrow;
     } catch (_) {
       throw const ProductoException(
-        'No pudimos actualizar el producto. Inténtalo nuevamente.',
+        'No pudimos actualizar el producto. '
+        'Inténtalo nuevamente.',
+      );
+    }
+  }
+
+  /// US08/E1 — Delega el DELETE y devuelve el producto confirmado.
+  @override
+  Future<Producto> eliminarProducto(int productoId) async {
+    try {
+      final productoModel = await productService.eliminarProducto(productoId);
+
+      return productoModel.toEntity();
+    } on ProductoException {
+      rethrow;
+    } catch (_) {
+      throw const ProductoException(
+        'No pudimos eliminar el producto. '
+        'Inténtalo nuevamente.',
       );
     }
   }

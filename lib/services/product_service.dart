@@ -8,5 +8,8 @@ abstract class ProductService {
   /// US07/E1 — Actualiza un producto existente mediante PUT.
   Future<ProductoModel> actualizarProducto(ActualizarProductoInput input);
 
+  /// US08/E1 — Elimina de forma simulada un producto mediante DELETE.
+  Future<ProductoModel> eliminarProducto(int productoId);
+
   Future<List<String>> obtenerCategorias();
 }

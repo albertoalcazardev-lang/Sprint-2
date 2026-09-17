@@ -321,6 +321,11 @@ class FakeProductRepository implements ProductRepository {
   }
 
   @override
+  Future<Producto> eliminarProducto(int productoId) {
+    throw UnimplementedError('Las pruebas de P20 no eliminan productos.');
+  }
+
+  @override
   Future<List<String>> obtenerCategorias() async {
     llamadasObtenerCategorias++;
 

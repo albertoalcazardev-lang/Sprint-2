@@ -8,5 +8,8 @@ abstract class ProductRepository {
   /// US07/E1 — Actualiza un producto existente.
   Future<Producto> actualizarProducto(ActualizarProductoInput input);
 
+  /// US08/E1 — Elimina de forma simulada un producto.
+  Future<Producto> eliminarProducto(int productoId);
+
   Future<List<String>> obtenerCategorias();
 }
