@@ -5,19 +5,24 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../data_sources/carrito_local_data_source.dart';
 import '../../data_sources/carrito_local_data_source_impl.dart';
+import '../../data_sources/carrito_mutable_local_data_source.dart';
 import '../../repositories/auth_repository.dart';
 import '../../repositories/auth_repository_impl.dart';
 import '../../repositories/carrito_repository.dart';
 import '../../repositories/carrito_repository_impl.dart';
 import '../../repositories/product_repository.dart';
 import '../../repositories/product_repository_impl.dart';
+import '../../repositories/gestion_carrito_repository.dart';
+import '../../repositories/gestion_carrito_repository_impl.dart';
 import '../../services/auth_service.dart';
 import '../../services/auth_service_impl.dart';
 import '../../services/carrito_service.dart';
 import '../../services/carrito_service_impl.dart';
+import '../../services/gestion_carrito_service.dart';
 import '../../services/product_service.dart';
 import '../../services/product_service_impl.dart';
 import '../../viewmodels/agregar_carrito_viewmodel.dart';
+import '../../viewmodels/carrito_viewmodel.dart';
 import '../../viewmodels/crear_producto_viewmodel.dart';
 import '../../viewmodels/cuenta_viewmodel.dart';
 import '../../viewmodels/editar_producto_viewmodel.dart';
@@ -115,11 +120,33 @@ void configurarDependencias() {
     );
   }
 
+  if (!getIt.isRegistered<CarritoMutableLocalDataSource>()) {
+    getIt.registerLazySingleton<CarritoMutableLocalDataSource>(
+      () => getIt<CarritoLocalDataSource>() as CarritoMutableLocalDataSource,
+    );
+  }
+
+  if (!getIt.isRegistered<GestionCarritoService>()) {
+    getIt.registerLazySingleton<GestionCarritoService>(
+      () => CarritoServiceImpl(getIt<ApiClient>()),
+    );
+  }
+
   if (!getIt.isRegistered<CarritoRepository>()) {
     getIt.registerLazySingleton<CarritoRepository>(
       () => CarritoRepositoryImpl(
         getIt<CarritoService>(),
         getIt<CarritoLocalDataSource>(),
+      ),
+    );
+  }
+
+  if (!getIt.isRegistered<GestionCarritoRepository>()) {
+    getIt.registerLazySingleton<GestionCarritoRepository>(
+      () => GestionCarritoRepositoryImpl(
+        getIt<GestionCarritoService>(),
+        getIt<CarritoLocalDataSource>(),
+        getIt<CarritoMutableLocalDataSource>(),
       ),
     );
   }
@@ -169,6 +196,16 @@ void configurarDependencias() {
     getIt.registerFactory<AgregarCarritoViewModel>(
       () => AgregarCarritoViewModel(
         getIt<CarritoRepository>(),
+        getIt<AuthRepository>(),
+      ),
+    );
+  }
+
+  if (!getIt.isRegistered<CarritoViewModel>()) {
+    getIt.registerFactory<CarritoViewModel>(
+      () => CarritoViewModel(
+        getIt<CarritoRepository>(),
+        getIt<GestionCarritoRepository>(),
         getIt<AuthRepository>(),
       ),
     );

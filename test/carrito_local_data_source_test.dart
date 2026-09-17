@@ -3,6 +3,7 @@ import 'package:tienda_flutter/core/errors/carrito_exception.dart';
 import 'package:tienda_flutter/core/storage/carrito_storage.dart';
 import 'package:tienda_flutter/data_sources/carrito_local_data_source.dart';
 import 'package:tienda_flutter/data_sources/carrito_local_data_source_impl.dart';
+import 'package:tienda_flutter/data_sources/carrito_mutable_local_data_source.dart';
 import 'package:tienda_flutter/models/producto.dart';
 
 void main() {
@@ -123,6 +124,18 @@ void main() {
 
     expect(carritoRecuperado.items, hasLength(1));
     expect(carritoRecuperado.items.single.producto.id, 1);
+    expect(carritoRecuperado.items.single.cantidad, 2);
+  });
+
+  test('persiste y recupera el identificador remoto de US10', () async {
+    final fuenteMutable = dataSource as CarritoMutableLocalDataSource;
+
+    await fuenteMutable.agregarOFusionarProductoConIdRemoto(4, mochila, 2, 21);
+
+    final nuevaInstancia = CarritoLocalDataSourceImpl(storage);
+    final carritoRecuperado = await nuevaInstancia.obtenerCarrito(4);
+
+    expect(carritoRecuperado.idCarritoRemoto, 21);
     expect(carritoRecuperado.items.single.cantidad, 2);
   });
 

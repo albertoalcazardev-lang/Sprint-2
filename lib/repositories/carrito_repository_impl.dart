@@ -1,5 +1,6 @@
 import '../core/errors/carrito_exception.dart';
 import '../data_sources/carrito_local_data_source.dart';
+import '../data_sources/carrito_mutable_local_data_source.dart';
 import '../models/agregar_carrito_input.dart';
 import '../models/carrito_snapshot.dart';
 import '../services/carrito_service.dart';
@@ -18,7 +19,20 @@ class CarritoRepositoryImpl implements CarritoRepository {
       _validarInput(input);
 
       // El orden es importante: no modificar el estado local antes del POST.
-      await carritoService.agregarProducto(input);
+      final respuesta = await carritoService.agregarProducto(input);
+
+      final fuenteLocal = carritoLocalDataSource;
+
+      if (fuenteLocal is CarritoMutableLocalDataSource) {
+        final fuenteMutable = fuenteLocal as CarritoMutableLocalDataSource;
+
+        return await fuenteMutable.agregarOFusionarProductoConIdRemoto(
+          input.idUsuario,
+          input.producto,
+          input.cantidad,
+          respuesta.id,
+        );
+      }
 
       return await carritoLocalDataSource.agregarOFusionarProducto(
         input.idUsuario,

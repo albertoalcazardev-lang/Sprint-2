@@ -4,6 +4,7 @@ import '../../models/producto.dart';
 import '../../models/rol_usuario.dart';
 import '../../repositories/auth_repository.dart';
 import '../../views/base_view.dart';
+import '../../views/carrito_view.dart';
 import '../../views/crear_producto_view.dart';
 import '../../views/cuenta_view.dart';
 import '../../views/editar_producto_view.dart';
@@ -16,6 +17,7 @@ class AppRouter {
 
   static const String rutaCrearProducto = '/products/new';
   static const String rutaEditarProducto = '/products/:id/edit';
+  static const String rutaCarrito = '/cart';
 
   static final RegExp _patronRutaEdicion = RegExp(r'^/products/[^/]+/edit$');
 
@@ -49,6 +51,10 @@ class AppRouter {
           _patronRutaEdicion.hasMatch(ubicacionActual);
 
       if (esRutaAdministrativa && sesion.rol != RolUsuario.administrador) {
+        return '$rutaCorrecta?accesoDenegado=true';
+      }
+
+      if (ubicacionActual == rutaCarrito && sesion.rol != RolUsuario.cliente) {
         return '$rutaCorrecta?accesoDenegado=true';
       }
 
@@ -183,6 +189,23 @@ class AppRouter {
               }
 
               context.go('/administrador');
+            },
+            onAccesoNoAutorizado: () {
+              context.go('/inicio?accesoDenegado=true');
+            },
+          );
+        },
+      ),
+      GoRoute(
+        name: 'carrito',
+        path: rutaCarrito,
+        builder: (context, state) {
+          return CarritoView(
+            onExplorarCatalogo: () {
+              context.go('/cliente');
+            },
+            onIrACuenta: () {
+              context.go('/cuenta');
             },
             onAccesoNoAutorizado: () {
               context.go('/inicio?accesoDenegado=true');

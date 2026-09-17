@@ -8,8 +8,10 @@ import '../models/item_carrito.dart';
 import '../models/producto.dart';
 import '../models/producto_model.dart';
 import 'carrito_local_data_source.dart';
+import 'carrito_mutable_local_data_source.dart';
 
-class CarritoLocalDataSourceImpl implements CarritoLocalDataSource {
+class CarritoLocalDataSourceImpl
+    implements CarritoLocalDataSource, CarritoMutableLocalDataSource {
   final CarritoStorage carritoStorage;
 
   final Map<int, CarritoSnapshot> _cache = {};
@@ -43,6 +45,45 @@ class CarritoLocalDataSourceImpl implements CarritoLocalDataSource {
     _validarProducto(producto);
     _validarCantidad(cantidad);
 
+    return _agregarOFusionar(
+      idUsuario,
+      producto,
+      cantidad,
+      idCarritoRemoto: null,
+    );
+  }
+
+  @override
+  Future<CarritoSnapshot> agregarOFusionarProductoConIdRemoto(
+    int idUsuario,
+    Producto producto,
+    int cantidad,
+    int idCarritoRemoto,
+  ) {
+    _validarIdUsuario(idUsuario);
+    _validarProducto(producto);
+    _validarCantidad(cantidad);
+
+    if (idCarritoRemoto <= 0) {
+      throw const DatosCarritoInvalidosException(
+        'No se pudo identificar el carrito remoto.',
+      );
+    }
+
+    return _agregarOFusionar(
+      idUsuario,
+      producto,
+      cantidad,
+      idCarritoRemoto: idCarritoRemoto,
+    );
+  }
+
+  Future<CarritoSnapshot> _agregarOFusionar(
+    int idUsuario,
+    Producto producto,
+    int cantidad, {
+    required int? idCarritoRemoto,
+  }) {
     return _ejecutarSecuencialmente(idUsuario, () async {
       final carritoActual = await _obtenerCarritoInterno(idUsuario);
 
@@ -65,6 +106,7 @@ class CarritoLocalDataSourceImpl implements CarritoLocalDataSource {
 
       final carritoActualizado = CarritoSnapshot(
         idUsuario: idUsuario,
+        idCarritoRemoto: idCarritoRemoto ?? carritoActual.idCarritoRemoto,
         items: itemsActualizados,
       );
 
@@ -75,6 +117,72 @@ class CarritoLocalDataSourceImpl implements CarritoLocalDataSource {
       _cambiosController.add(carritoActualizado);
 
       return carritoActualizado;
+    });
+  }
+
+  @override
+  Future<CarritoSnapshot> actualizarCantidad(
+    int idUsuario,
+    int productoId,
+    int nuevaCantidad,
+  ) {
+    _validarIdUsuario(idUsuario);
+    _validarCantidad(nuevaCantidad);
+
+    if (productoId <= 0) {
+      throw const DatosCarritoInvalidosException('No se encontró el producto.');
+    }
+
+    return _ejecutarSecuencialmente(idUsuario, () async {
+      final carritoActual = await _obtenerCarritoInterno(idUsuario);
+      final items = carritoActual.items.toList();
+      final indice = items.indexWhere((item) => item.producto.id == productoId);
+
+      if (indice < 0) {
+        throw const DatosCarritoInvalidosException(
+          'El producto ya no está en el carrito.',
+        );
+      }
+
+      items[indice] = items[indice].copiarConCantidad(nuevaCantidad);
+      final actualizado = carritoActual.copiarConItems(items);
+      await _publicarCarrito(actualizado);
+      return actualizado;
+    });
+  }
+
+  @override
+  Future<CarritoSnapshot> eliminarProducto(int idUsuario, int productoId) {
+    _validarIdUsuario(idUsuario);
+
+    if (productoId <= 0) {
+      throw const DatosCarritoInvalidosException('No se encontró el producto.');
+    }
+
+    return _ejecutarSecuencialmente(idUsuario, () async {
+      final carritoActual = await _obtenerCarritoInterno(idUsuario);
+      final items = carritoActual.items
+          .where((item) => item.producto.id != productoId)
+          .toList();
+
+      if (items.length == carritoActual.items.length) {
+        throw const DatosCarritoInvalidosException(
+          'El producto ya no está en el carrito.',
+        );
+      }
+
+      final actualizado = carritoActual.copiarConItems(items);
+      await _publicarCarrito(actualizado);
+      return actualizado;
+    });
+  }
+
+  @override
+  Future<void> guardarSnapshot(CarritoSnapshot carrito) {
+    _validarIdUsuario(carrito.idUsuario);
+
+    return _ejecutarSecuencialmente(carrito.idUsuario, () async {
+      await _publicarCarrito(carrito);
     });
   }
 
@@ -147,6 +255,7 @@ class CarritoLocalDataSourceImpl implements CarritoLocalDataSource {
     try {
       final carritoJson = jsonEncode({
         'userId': carrito.idUsuario,
+        'remoteCartId': carrito.idCarritoRemoto,
         'items': carrito.items.map((item) {
           return {
             'product': {
@@ -195,6 +304,11 @@ class CarritoLocalDataSourceImpl implements CarritoLocalDataSource {
       throw const FormatException('El carrito pertenece a otro usuario.');
     }
 
+    final idCarritoRemotoJson = json['remoteCartId'];
+    final idCarritoRemoto = idCarritoRemotoJson == null
+        ? null
+        : _leerEnteroPositivo(idCarritoRemotoJson, nombreCampo: 'remoteCartId');
+
     final itemsJson = json['items'];
 
     if (itemsJson is! List) {
@@ -242,8 +356,15 @@ class CarritoLocalDataSourceImpl implements CarritoLocalDataSource {
 
     return CarritoSnapshot(
       idUsuario: idUsuarioGuardado,
+      idCarritoRemoto: idCarritoRemoto,
       items: itemsPorProducto.values.toList(),
     );
+  }
+
+  Future<void> _publicarCarrito(CarritoSnapshot carrito) async {
+    await _guardarCarrito(carrito);
+    _cache[carrito.idUsuario] = carrito;
+    _cambiosController.add(carrito);
   }
 
   int _leerEnteroPositivo(dynamic valor, {required String nombreCampo}) {

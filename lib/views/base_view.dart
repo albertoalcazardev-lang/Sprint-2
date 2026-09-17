@@ -114,6 +114,7 @@ class _BaseViewState extends State<BaseView> {
     }
 
     final esAdministrador = _sesion!.rol == RolUsuario.administrador;
+    final esCliente = _sesion!.rol == RolUsuario.cliente;
 
     return Scaffold(
       backgroundColor: AppColors.fondoGeneral,
@@ -179,6 +180,26 @@ class _BaseViewState extends State<BaseView> {
                   const SizedBox(height: 22),
                   _construirContenidoCatalogoPendiente(),
                   const SizedBox(height: 22),
+                  if (esCliente) ...[
+                    SizedBox(
+                      height: 50,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          context.go('/cart');
+                        },
+                        icon: const Icon(Icons.shopping_cart_rounded),
+                        label: const Text('Mi carrito'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primario,
+                          foregroundColor: AppColors.blanco,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   SizedBox(
                     height: 50,
                     child: OutlinedButton.icon(
