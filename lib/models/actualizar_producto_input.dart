@@ -1,4 +1,5 @@
-class Producto {
+/// US07/E1 — Datos validados para actualizar un producto existente.
+class ActualizarProductoInput {
   final int id;
   final String titulo;
   final double precio;
@@ -6,7 +7,7 @@ class Producto {
   final String imageUrl;
   final String descripcion;
 
-  const Producto({
+  const ActualizarProductoInput({
     required this.id,
     required this.titulo,
     required this.precio,
