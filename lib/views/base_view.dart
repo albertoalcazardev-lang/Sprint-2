@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../core/di/dependency_injection.dart';
+import '../models/rol_usuario.dart';
 import '../models/sesion_usuario.dart';
 import '../repositories/auth_repository.dart';
 
@@ -115,6 +116,28 @@ class _BaseViewState extends State<BaseView> {
                     ),
                   ),
                   const SizedBox(height: 28),
+                  if (_sesion!.rol == RolUsuario.administrador ||
+                      _sesion!.rol == RolUsuario.auditor) ...[
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          context.push('/carritos');
+                        },
+                        icon: const Icon(Icons.history_rounded),
+                        label: const Text('Histórico global de carritos'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF17233C),
+                          foregroundColor: Colors.white,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                  ],
                   SizedBox(
                     width: double.infinity,
                     height: 50,

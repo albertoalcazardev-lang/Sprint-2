@@ -1,7 +1,9 @@
 import 'package:go_router/go_router.dart';
 
+import '../../models/rol_usuario.dart';
 import '../../repositories/auth_repository.dart';
 import '../../views/base_view.dart';
+import '../../views/carritos_view.dart';
 import '../../views/cuenta_view.dart';
 import '../../views/login_view.dart';
 import '../di/dependency_injection.dart';
@@ -26,6 +28,11 @@ class AppRouter {
       }
 
       final rutaCorrecta = RutaPorRol.obtener(sesion.rol);
+
+      if (ubicacionActual == '/carritos' &&
+          sesion.rol == RolUsuario.cliente) {
+        return rutaCorrecta;
+      }
 
       if (ubicacionActual == '/login' || ubicacionActual == '/inicio') {
         return rutaCorrecta;
@@ -81,6 +88,12 @@ class AppRouter {
         path: '/cliente',
         builder: (context, state) {
           return const BaseView();
+        },
+      ),
+      GoRoute(
+        path: '/carritos',
+        builder: (context, state) {
+          return const CarritosView();
         },
       ),
       GoRoute(
