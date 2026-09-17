@@ -200,6 +200,25 @@ class _BaseViewState extends State<BaseView> {
                       ),
                     ),
                     const SizedBox(height: 12),
+                    SizedBox(
+                      height: 50,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          context.go('/carritos');
+                        },
+                        icon: const Icon(Icons.history_rounded),
+                        label: const Text('Histórico de carritos'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.textoPrincipal,
+                          backgroundColor: AppColors.blanco,
+                          side: const BorderSide(color: AppColors.bordeCampo),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
                   ],
                   if (esCliente) ...[
                     SizedBox(

@@ -5,6 +5,7 @@ import '../../models/rol_usuario.dart';
 import '../../repositories/auth_repository.dart';
 import '../../views/base_view.dart';
 import '../../views/carrito_view.dart';
+import '../../views/carritos_view.dart';
 import '../../views/crear_producto_view.dart';
 import '../../views/cuenta_view.dart';
 import '../../views/editar_producto_view.dart';
@@ -50,7 +51,8 @@ class AppRouter {
       final esRutaAdministrativa =
           ubicacionActual == rutaCrearProducto ||
           _patronRutaEdicion.hasMatch(ubicacionActual) ||
-          ubicacionActual == '/usuarios';
+          ubicacionActual == '/usuarios' ||
+          ubicacionActual == '/carritos';
 
       if (esRutaAdministrativa && sesion.rol != RolUsuario.administrador) {
         return '$rutaCorrecta?accesoDenegado=true';
@@ -203,6 +205,13 @@ class AppRouter {
         path: '/usuarios',
         builder: (context, state) {
           return const UsuariosView();
+        },
+      ),
+      GoRoute(
+        name: 'carritosGlobales',
+        path: '/carritos',
+        builder: (context, state) {
+          return const CarritosView();
         },
       ),
       GoRoute(

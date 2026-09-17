@@ -16,17 +16,22 @@ import '../../repositories/usuario_repository.dart';
 import '../../repositories/usuario_repository_impl.dart';
 import '../../repositories/gestion_carrito_repository.dart';
 import '../../repositories/gestion_carrito_repository_impl.dart';
+import '../../repositories/historico_carrito_repository.dart';
+import '../../repositories/historico_carrito_repository_impl.dart';
 import '../../services/auth_service.dart';
 import '../../services/auth_service_impl.dart';
 import '../../services/carrito_service.dart';
 import '../../services/carrito_service_impl.dart';
 import '../../services/gestion_carrito_service.dart';
+import '../../services/historico_carrito_service.dart';
+import '../../services/historico_carrito_service_impl.dart';
 import '../../services/product_service.dart';
 import '../../services/product_service_impl.dart';
 import '../../services/usuario_service.dart';
 import '../../services/usuario_service_impl.dart';
 import '../../viewmodels/agregar_carrito_viewmodel.dart';
 import '../../viewmodels/carrito_viewmodel.dart';
+import '../../viewmodels/carritos_viewmodel.dart';
 import '../../viewmodels/crear_producto_viewmodel.dart';
 import '../../viewmodels/cuenta_viewmodel.dart';
 import '../../viewmodels/editar_producto_viewmodel.dart';
@@ -168,6 +173,20 @@ void configurarDependencias() {
     );
   }
 
+  if (!getIt.isRegistered<HistoricoCarritoService>()) {
+    getIt.registerLazySingleton<HistoricoCarritoService>(
+      () => HistoricoCarritoServiceImpl(getIt<ApiClient>()),
+    );
+  }
+
+  if (!getIt.isRegistered<HistoricoCarritoRepository>()) {
+    getIt.registerLazySingleton<HistoricoCarritoRepository>(
+      () => HistoricoCarritoRepositoryImpl(
+        getIt<HistoricoCarritoService>(),
+      ),
+    );
+  }
+
   if (!getIt.isRegistered<LoginViewModel>()) {
     getIt.registerFactory<LoginViewModel>(
       () =>
@@ -231,6 +250,12 @@ void configurarDependencias() {
   if (!getIt.isRegistered<UsuariosViewModel>()) {
     getIt.registerFactory<UsuariosViewModel>(
       () => UsuariosViewModel(getIt<UsuarioRepository>()),
+    );
+  }
+
+  if (!getIt.isRegistered<CarritosViewModel>()) {
+    getIt.registerFactory<CarritosViewModel>(
+      () => CarritosViewModel(getIt<HistoricoCarritoRepository>()),
     );
   }
 }
